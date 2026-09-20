@@ -53,7 +53,7 @@ def session_login(payload: LoginRequest, response: Response):
         expired_in = datetime.timedelta(days=7)
         session_cookie = auth.create_session_cookie(id_token, expires_in=expired_in)
 
-        response.set_cookie(key="turin_session", value=session_cookie, max_age=int(expired_in.total_seconds()), httponly=True, secure=True, samesite="lax")
+        response.set_cookie(key="turin_session", domain=".turinflow.com.br", value=session_cookie, max_age=int(expired_in.total_seconds()), httponly=True, secure=True, samesite="lax")
         return {"status": "200 OK"}
 
     except auth.InvalidIdTokenError:
@@ -64,7 +64,7 @@ def session_login(payload: LoginRequest, response: Response):
 
 @app.post("/sessionLogout")
 def session_logout(response: Response, turin_session: str | None = Cookie(default=None)):
-    response.delete_cookie(key="turin_session", httponly=True, secure=True, samesite="lax")
+    response.delete_cookie(key="turin_session", domain=".turinflow.com.br", httponly=True, secure=True, samesite="lax")
 
     if turin_session:
         try:
