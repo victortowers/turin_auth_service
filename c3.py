@@ -32,7 +32,7 @@ app.add_middleware(
         "https://turinflow.com.br",
     ],
     allow_credentials=True,
-    allow_methods=["POST"],
+    allow_methods=["POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
 
