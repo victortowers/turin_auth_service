@@ -30,4 +30,4 @@ requires = ["uv_build>=0.12.10,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.vercel]
-entrypoint = "backend.server:app"
+entrypoint = "c3:app"
