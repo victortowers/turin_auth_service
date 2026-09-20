@@ -47,7 +47,7 @@ def session_login(payload: LoginRequest, response: Response):
     try:
         decoded_claims = auth.verify_id_token(id_token, check_revoked=True)
         # Only process if the user signed in within the last 5 minutes.
-        if time.time() - decoded_claims.get("auth_time", "300") > 200 * 60:
+        if time.time() - decoded_claims.get("auth_time", "300") > 2 * 60:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "Sign-In is required")
 
         expired_in = datetime.timedelta(days=7)
