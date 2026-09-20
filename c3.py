@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Response, Cookie, status
 from firebase_admin import auth, exceptions, credentials
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
-from fastapi import FastAPI
 
 import firebase_admin
 import datetime
@@ -25,6 +25,16 @@ if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://turinflow.com.br",
+    ],
+    allow_credentials=True,
+    allow_methods=["POST"],
+    allow_headers=["Content-Type"],
+)
 
 class LoginRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
