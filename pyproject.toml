@@ -7,20 +7,5 @@ authors = [
     { email = "202715235+victortowers@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
-dependencies = [
-    "asyncpg>=0.31.0",
-    "fastapi>=0.141.1",
-    "firebase-admin>=7.6.0",
-    "numpy>=2.5.2",
-    "osmium>=4.3.1",
-    "psycopg2-binary>=2.9.13",
-    "pydantic>=2.13.5",
-    "python-dotenv>=1.2.3",
-    "scipy>=1.18.1",
-    "sqlalchemy>=2.0.54",
-    "typing>=3.10.0.0",
-    "uvicorn[standard]>=0.53.0",
-]
-
 [tool.vercel]
 entrypoint = "c3:app"
