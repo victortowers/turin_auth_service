@@ -1,4 +1,3 @@
 .env
 .osm_cache
-uv.lock
 .venv

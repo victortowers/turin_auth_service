@@ -40,7 +40,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
 
-        run: mkdir -p data && aws s3 sync "s3://${{ secrets.R2_BUCKET}}" ./data --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+        run: mkdir -p data && aws s3 sync "s3://${{ secrets.R2_BUCKET }}" ./data --endpoint-url "${{ secrets.R2_ENDPOINT }}"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
