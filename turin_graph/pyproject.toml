@@ -1,5 +1,5 @@
 [project]
-name = "traffic-stuff"
+name = "turin-graph"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [tool.vercel]
-entrypoint = "c3:app"
+entrypoint = "b2:app"
