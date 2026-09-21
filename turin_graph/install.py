@@ -9,13 +9,15 @@ def download_bucket(
     access_key: str,
     secret_access_key: str,
     prefix: str = "",
+    endpoint: str = "",
 ) -> None:
     s3 = boto3.client(
-        "s3",
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_access_key,
-    )
-
+            "s3",
+            endpoint_url=endpoint,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_access_key,
+            region_name="auto",
+        )
     paginator = s3.get_paginator("list_objects_v2")
 
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
@@ -67,6 +69,12 @@ def main() -> None:
         help="Only download objects whose keys start with this prefix",
     )
 
+    parser.add_argument(
+            "--endpoint",
+            required=True,
+            help="Endpoint",
+    )
+
     args = parser.parse_args()
 
     args.destination.mkdir(parents=True, exist_ok=True)
@@ -77,6 +85,7 @@ def main() -> None:
         access_key=args.access_key,
         secret_access_key=args.secret_access_key,
         prefix=args.prefix,
+        endpoint=args.endpoint,
     )
 
 

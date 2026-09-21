@@ -33,7 +33,7 @@ jobs:
         run: cd turin_graph && uv lock && uv sync
 
       - name: Install Data Dependencies
-        run: cd turin_graph && uv run install.py "${{ secrets.R2_BUCKET }}" ./data --access-key "${{ secrets.R2_ACCESS_KEY_ID }}" --secret-access-key "${{ secrets.R2_SECRET_ACCESS_KEY }}"
+        run: cd turin_graph && uv run install.py "${{ secrets.R2_BUCKET }}" ./data --access-key "${{ secrets.R2_ACCESS_KEY_ID }}" --secret-access-key "${{ secrets.R2_SECRET_ACCESS_KEY_ID }}" --endpoint "${{ secrets.R2_ENDPOINT }}"
 
       - name: Login to GHCR
         uses: docker/login-action@v3
