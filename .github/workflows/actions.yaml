@@ -34,9 +34,16 @@ jobs:
 
       - name: Install Dependencies
         run: uv sync --locked
+        
+      - name: Download Application Data
+        working-directory: .
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
 
-      - name: Install Data Dependencies
-        run: uv run install.py "${{ secrets.R2_BUCKET }}" ./data --access-key "${{ secrets.R2_ACCESS_KEY_ID }}" --secret-access-key "${{ secrets.R2_SECRET_ACCESS_KEY_ID }}" --endpoint "${{ secrets.R2_ENDPOINT }}"
+        run: mkdir -p data && aws s3 sync "s3://${{ secrets.R2_BUCKET}}" ./data --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+
 
       - name: Login to GHCR
         uses: docker/login-action@v3
