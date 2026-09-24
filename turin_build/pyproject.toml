@@ -11,6 +11,6 @@ dependencies = [
     "osmium",
     "numpy",
     "scipy",
-    "pylib"
+    "pylib-general"
     
 ]
