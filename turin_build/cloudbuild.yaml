@@ -49,7 +49,7 @@ steps:
   # 4. Run Python processor
   - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
     id: 'generate-data'
-    dir: /workspace/turin_build/
+    dir: '/workspace/turin_build/'
     entrypoint: 'bash'
     args:
         - '-c'
@@ -57,7 +57,7 @@ steps:
           set -e
 
           uv sync
-
+          uv tree
           uv run python osm14.py \
             --with-coords \
             sudeste-extract.osm.pbf
