@@ -53,3 +53,6 @@ steps:
 
         uv run python osm14.py \
           --with-coords /workspace/sudeste-extract.osm.pbf
+
+options:
+  logging: CLOUD_LOGGING_ONLY
