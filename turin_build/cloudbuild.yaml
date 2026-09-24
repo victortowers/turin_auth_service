@@ -10,7 +10,7 @@ steps:
         set -eoux
 
         uv sync
-        uv run ruff check .
+        uv run ruff check --fix .
         uv run mypy .
         uv run python -m py_compile osm14.py
 

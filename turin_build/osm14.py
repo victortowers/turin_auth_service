@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """build_graph_streaming.py — streaming PBF parser for state-level files.
 
 No OSMnx, no NetworkX.  Streams the PBF once with pyosmium, builds a
