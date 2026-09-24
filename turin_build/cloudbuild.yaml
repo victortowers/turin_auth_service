@@ -50,10 +50,12 @@ steps:
         export PATH="/root/.local/bin:$$PATH"
 
         uv sync --frozen
+        uv run ruff check .
+        uv run mypy .
+        python -m py_compile osm14.py
 
-        uv run python run.py \
-          --input /workspace/sudeste-extract.osm.pbf \
-          --output-dir /workspace/output
+        uv run python osm14.py \
+          --with-coords /workspace/sudeste-extract.osm.pbf
 
   # 5. Build container
   - name: 'gcr.io/cloud-builders/docker'
