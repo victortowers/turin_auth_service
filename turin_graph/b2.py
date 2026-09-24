@@ -82,7 +82,7 @@ def a_star(start1, end1):
 
     visited = set()
     nodes_explored = 0
-    deadlined = time.monotonic() + 3.21
+    deadlined = time.monotonic() + 7
 
     try:
 

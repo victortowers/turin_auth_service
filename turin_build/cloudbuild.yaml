@@ -24,7 +24,7 @@ steps:
       - '5'
       - '-o'
       - '/workspace/turin_build/sudeste.osm.pbf'
-      - 'https://download.geofabrik.de/south-america/brazil/sudeste-latest.osm.pbf'
+      - 'https://r2.turinflow.com.br/sudeste-260923.osm.pbf'
 
   # 3. Extract
   - name: 'debian:bookworm-slim'
@@ -51,6 +51,9 @@ steps:
     id: 'generate-data'
     dir: '/workspace/turin_build/'
     entrypoint: 'bash'
+    secretEnv:
+        - 'R2_ACCESS_KEY'
+        - 'R2_SECRET_ACCESS_KEY'
     args:
         - '-c'
         - |
@@ -62,6 +65,14 @@ steps:
           uv run python osm14.py \
             --with-coords \
             sudeste-extract.osm.pbf
+
+          uv tool install awscli
+
+          export AWS_ACCESS_KEY_ID="$$R2_ACCESS_KEY"
+          export AWS_SECRET_ACCESS_KEY="$$R2_SECRET_ACCESS_KEY"
+          export AWS_DEFAULT_REGION="auto"
+
+          aws s3 sync /workspace/turin_build/.osm_cache s3://turin-data1/ --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
 
 options:
   logging: CLOUD_LOGGING_ONLY
