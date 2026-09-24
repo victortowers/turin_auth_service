@@ -1,15 +1,17 @@
 steps:
 
   # 1. Install dependencies + test
-  - name: 'python:3.13'
+  - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
     id: 'test'
+    dir: traffic-data
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL=/usr/local/bin sh
-
-        uv sync --frozen
+        uv sync
+        uv run ruff check .
+        uv run mypy .
+        uv run python -m py_compile osm14.py
 
   # 2. Download Geofabrik
   - name: 'gcr.io/cloud-builders/curl'
@@ -36,22 +38,20 @@ steps:
       - '/workspace/sudeste-latest.osm.pbf'
 
   # 4. Run Python processor
-  - name: 'python:3.13'
+  - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
     id: 'generate-data'
+    dir: 'traffic-data'
     entrypoint: 'bash'
     args:
-      - '-c'
-      - |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        export PATH="/root/.local/bin:$$PATH"
+        - '-c'
+        - |
+          set -e
 
-        uv sync --frozen
-        uv run ruff check .
-        uv run mypy .
-        python -m py_compile osm14.py
+          uv sync
 
-        uv run python osm14.py \
-          --with-coords /workspace/sudeste-extract.osm.pbf
+          uv run python osm14.py \
+            --with-coords \
+            /workspace/sudeste-extract.osm.pbf
 
 options:
   logging: CLOUD_LOGGING_ONLY
