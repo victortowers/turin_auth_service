@@ -27,16 +27,24 @@ steps:
       - 'https://download.geofabrik.de/south-america/brazil/sudeste-latest.osm.pbf'
 
   # 3. Extract
-  - name: 'ghcr.io/osmcode/osmium-tool'
+  - name: 'debian:bookworm-slim'
     id: 'osmium'
-    entrypoint: 'osmium'
+    dir: 'traffic-data'
+    entrypoint: 'bash'
     args:
-      - extract
-      - '--polygon'
-      - 'shape.geojson'
-      - '--output'
-      - '/workspace/turin_build/sudeste-extract.osm.pbf'
-      - '/workspace/turin_build/sudeste-latest.osm.pbf'
+      - '-c'
+      - |
+        set -e
+
+        apt-get update
+        apt-get install -y --no-install-recommends osmium-tool
+
+        osmium --version
+
+        osmium extract \
+          --polygon shape.geojson \
+          --output /workspace/turin_build/sudeste-extract.osm.pbf \
+          /workspace/turin_build/sudeste.osm.pbf
 
   # 4. Run Python processor
   - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
