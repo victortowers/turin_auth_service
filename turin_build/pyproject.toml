@@ -11,6 +11,9 @@ dependencies = [
     "osmium",
     "numpy",
     "scipy",
-    "pylib-general"
-    
+    "pylib-general",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.8",
+
 ]
