@@ -17,3 +17,6 @@ dependencies = [
     "ruff>=0.16.8",
 
 ]
+
+[tool.mypy]
+ignore_missing_imports = true
