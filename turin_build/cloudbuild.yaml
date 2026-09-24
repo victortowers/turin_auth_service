@@ -1,36 +1,13 @@
 steps:
-  - name: 'ubuntu'
-    id: 'inspect-filesystem'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        set -x
-
-        echo "=== pwd ==="
-        pwd
-
-        echo "=== /workspace ==="
-        ls -la /workspace
-
-        echo "=== /workspace tree (2 levels) ==="
-        find /workspace -maxdepth 2 -type f | sort
-
-        echo "=== current directory ==="
-        ls -la
-
-        echo "=== environment ==="
-        echo "PWD=$$PWD"
-
   # 1. Install dependencies + test
   - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
     id: 'test'
-    dir: traffic-data
+    dir: /workspace/turin_build
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        cd /workspace/traffic-data
+        cd /workspace/traffic-build
 
         uv sync
         uv run ruff check .
@@ -46,7 +23,7 @@ steps:
       - '--retry'
       - '5'
       - '-o'
-      - '/workspace/sudeste.osm.pbf'
+      - '/workspace/turin_build/sudeste.osm.pbf'
       - 'https://download.geofabrik.de/south-america/brazil/sudeste-latest.osm.pbf'
 
   # 3. Extract
@@ -58,13 +35,13 @@ steps:
       - '--polygon'
       - 'shape.geojson'
       - '--output'
-      - '/workspace/sudeste-extract.osm.pbf'
-      - '/workspace/sudeste-latest.osm.pbf'
+      - '/workspace/turin_build/sudeste-extract.osm.pbf'
+      - '/workspace/turin_build/sudeste-latest.osm.pbf'
 
   # 4. Run Python processor
   - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
     id: 'generate-data'
-    dir: 'traffic-data'
+    dir: /workspace/turin_build/
     entrypoint: 'bash'
     args:
         - '-c'
@@ -75,7 +52,7 @@ steps:
 
           uv run python osm14.py \
             --with-coords \
-            /workspace/sudeste-extract.osm.pbf
+            sudeste-extract.osm.pbf
 
 options:
   logging: CLOUD_LOGGING_ONLY
