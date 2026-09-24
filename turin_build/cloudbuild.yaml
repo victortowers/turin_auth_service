@@ -7,7 +7,6 @@ steps:
     args:
       - '-c'
       - |
-        cd /workspace/traffic-build
 
         uv sync
         uv run ruff check .
@@ -57,11 +56,13 @@ steps:
     args:
         - '-c'
         - |
-          set -e
+          set -eoux
 
           apt update && apt install -y libexpat1 awscli
           uv sync
           uv tree
+
+          echo "=== STARTING OSM PROCESSOR ==="
           uv run python osm14.py \
             --with-coords \
             sudeste-extract.osm.pbf
