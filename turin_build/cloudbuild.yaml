@@ -1,4 +1,26 @@
 steps:
+  - name: 'ubuntu'
+    id: 'inspect-filesystem'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -x
+
+        echo "=== pwd ==="
+        pwd
+
+        echo "=== /workspace ==="
+        ls -la /workspace
+
+        echo "=== /workspace tree (2 levels) ==="
+        find /workspace -maxdepth 2 -type f | sort
+
+        echo "=== current directory ==="
+        ls -la
+
+        echo "=== environment ==="
+        echo "PWD=$$PWD"
 
   # 1. Install dependencies + test
   - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
