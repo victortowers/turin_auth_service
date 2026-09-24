@@ -29,7 +29,7 @@ steps:
   # 3. Extract
   - name: 'debian:bookworm-slim'
     id: 'osmium'
-    dir: 'traffic-data'
+    dir: '/workspace/turin_build'
     entrypoint: 'bash'
     args:
       - '-c'
