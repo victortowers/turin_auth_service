@@ -8,6 +8,8 @@ steps:
     args:
       - '-c'
       - |
+        cd /workspace/traffic-data
+
         uv sync
         uv run ruff check .
         uv run mypy .

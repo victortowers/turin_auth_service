@@ -14,8 +14,3 @@ dependencies = [
 ]
 [tool.vercel]
 entrypoint = "c3:app"
-
-[tool.uv.workspace]
-members = [
-    "turin_build",
-]
