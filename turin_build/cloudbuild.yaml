@@ -34,7 +34,7 @@ steps:
       - 'shape.geojson'
       - '--output'
       - '/workspace/sudeste-extract.osm.pbf'
-      - '/workspace/sudeste.osm.pbf'
+      - '/workspace/sudeste-latest.osm.pbf'
 
   # 4. Run Python processor
   - name: 'python:3.13'
@@ -53,28 +53,3 @@ steps:
 
         uv run python osm14.py \
           --with-coords /workspace/sudeste-extract.osm.pbf
-
-  # 5. Build container
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'docker-build'
-    args:
-      - build
-      - '-t'
-      - '${_IMAGE}'
-      - '.'
-
-  # 6. Push container
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'docker-push'
-    args:
-      - push
-      - '${_IMAGE}'
-
-
-substitutions:
-
-  _IMAGE: 'us-docker.pkg.dev/$PROJECT_ID/traffic/traffic-data:latest'
-
-
-options:
-  logging: CLOUD_LOGGING_ONLY
