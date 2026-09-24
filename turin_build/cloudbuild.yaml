@@ -83,4 +83,4 @@ availableSecrets:
       env: R2_ACCESS_KEY
 
     - versionName: projects/$PROJECT_ID/secrets/R2_SECRET_ACCESS_KEY/versions/latest
-      env: R2_SECRET_KEY
+      env: R2_SECRET_ACCESS_KEY
