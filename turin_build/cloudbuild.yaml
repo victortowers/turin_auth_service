@@ -86,7 +86,7 @@ steps:
           set -eoux
           mv /workspace/turin_build/.osm_cache /workspace/turin_graph/.osm_cache
 
-  - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:stable'
     id: 'generate-artifact'
     dir: '/workspace/turin_graph/'
     entrypoint: 'bash'
@@ -94,7 +94,7 @@ steps:
         - '-c'
         - |
           gcloud builds submit \
-            --tag "southamerica-east1-docker.pkg.dev/$(gcloud config get-value project)/routing-api1/traffic-builder:latest" \
+            --tag "southamerica-east1-docker.pkg.dev/turinflow-app/routing-api1/traffic-builder:latest" \
             .
 
 options:
