@@ -7,5 +7,8 @@ authors = [
     { email = "202715235+victortowers@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
+dependencies = [
+    "pytest>=9.1.1",
+]
 [tool.vercel]
 entrypoint = "c3:app"

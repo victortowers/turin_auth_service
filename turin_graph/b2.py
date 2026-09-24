@@ -1,11 +1,13 @@
 from fastapi import FastAPI, HTTPException, Response, Cookie, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from time import monotonic
 import scipy.sparse as sp
 import numpy as np
 import heapq
 import math
 import time
+import os
 
 
 app = FastAPI()
@@ -14,11 +16,17 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://turinflow.com.br",
+        "http://localhost:8090",
+
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
+
+class RoutingRequest(BaseModel):
+    node_start: float
+    node_end: float
 
 def find_position(node_idx):
     position = int(np.searchsorted(node_ids, node_idx))
@@ -104,17 +112,20 @@ def a_star(start1, end1):
 
                 heapq.heappush(pq, (new_distance + h1, new_distance, node_x, row_path + [node_x]))
 
-    except Exception as e:
-        return "500 Internal Server Error"
+        return "out_of_time", "out_of_time"
+
+    except Exception:
+        raise
 
 
 coordinates = np.load(".osm_cache/node_coords.npy",  mmap_mode="r") #1
 node_ids = np.load(".osm_cache/node_ids.npy",  mmap_mode="r")
 indices = np.load(".osm_cache/indices.npy",  mmap_mode="r") #2
 
-data = np.load(".osm_cache/data.npy",  mmap_mode="r") #3
+data = np.load(".osm_cache/data.npy", mmap_mode="r") #3
 shape = np.load(".osm_cache/shape.npy", mmap_mode="r")
 indptr = np.load(".osm_cache/indptr.npy",  mmap_mode="r") #4
+edge_etas = np.load(".osm_cache/edge_highway.npy", mmap_mode="r")
 
 
 A = sp.csr_matrix((data, indices, indptr), shape=tuple(shape))
@@ -123,8 +134,8 @@ A = sp.csr_matrix((data, indices, indptr), shape=tuple(shape))
 print("nodes:", A.shape[0], "| directed edges:", A.nnz,"| avg degree: %.2f" % (A.nnz / A.shape[0]))
 
 #start = 1871769061
-#end = 31935580 # (Aeroporto de Viracopos)
-#end = 1001568698 # (Residência Cidade Jardim)
+#start = 31935580 # (Aeroporto de Viracopos)
+#start = 1001568698 # (Residência Cidade Jardim)
 #start = 2368042870 # (Santa Bárbara Residence)
 start = 1871768924 # (Alameda Coinbra)
 #end = 4363722848 # (Saída Alpha 0)
@@ -134,12 +145,48 @@ end = 245374595 # (Aeroporto de Guarulhos)
 #end = 493141051 # (Praia Grande)
 #end = 1669971805 # (Taubaté)
 #end = 12099764350 # (Shopping Village Mall, Rio de Janeiro)
-time1 = time.time_ns()
+# hi
+#1379439636 #(Shopping Morumbi)
+@app.post("/routing")
+def location_search(payload: RoutingRequest, response: Response):
+    try:
+        node_start = int(payload.node_start)
+        node_end = int(payload.node_end)
+        time1 = monotonic()
+        total_distance, routed = a_star(node_start, node_end)
+
+        if total_distance == "out_of_time":
+            time2 = (monotonic() - time1) * 1000
+            return {"total_distance": None, "routed": None, "time_spent": f"{time2:.3f} ms" , "detail": "Out of time. The limit for processing is 3210ms."}
+
+        route_coordinates = [
+            coordinates[find_position(node_id)].tolist()
+            for node_id in routed
+        ]
+
+        start = 0
+        for node_id in routed:
+            start += float(edge_etas[find_position(node_id)])
+
+        return {
+        "total_distance": total_distance,
+        "time_spent": monotonic() - time1,
+        "estimated_time_hours": start / 3600,
+        "routed": route_coordinates,
+
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Unable to finalize request.")
+
+
 try:
     total_distance, routed = a_star(start, end)
     print(total_distance)
 
-    total_time = (time.time_ns() - time1) / (10 ** 9)
-    print(f"Time taken is {total_time:.3f} seconds")
 except Exception:
-    print("**500 Internal Server Error**")
+    pass
