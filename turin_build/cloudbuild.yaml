@@ -76,8 +76,6 @@ steps:
 
           aws s3 sync /workspace/turin_build/.osm_cache s3://turin-data1/ --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
 
-          - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
-
   - name: 'debian:bookworm-slim'
     id: 'copy-directory-data'
     dir: '/workspace/turin_build/'
