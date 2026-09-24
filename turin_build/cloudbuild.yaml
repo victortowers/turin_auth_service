@@ -7,6 +7,7 @@ steps:
     args:
       - '-c'
       - |
+        set -eoux
 
         uv sync
         uv run ruff check .
@@ -33,7 +34,7 @@ steps:
     args:
       - '-c'
       - |
-        set -e
+        set -eoux
 
         apt-get update
         apt-get install -y --no-install-recommends osmium-tool
@@ -41,6 +42,7 @@ steps:
         osmium --version
 
         osmium extract \
+          --verbose \
           --polygon shape.geojson \
           --output /workspace/turin_build/sudeste-extract.osm.pbf \
           /workspace/turin_build/sudeste.osm.pbf
@@ -56,7 +58,7 @@ steps:
     args:
         - '-c'
         - |
-          set -eoux
+          set -eoux pipefail
 
           apt update && apt install -y libexpat1 awscli
           uv sync
@@ -67,11 +69,35 @@ steps:
             --with-coords \
             sudeste-extract.osm.pbf
 
+          set +x
           export AWS_ACCESS_KEY_ID="$$R2_ACCESS_KEY"
           export AWS_SECRET_ACCESS_KEY="$$R2_SECRET_ACCESS_KEY"
           export AWS_DEFAULT_REGION="auto"
 
           aws s3 sync /workspace/turin_build/.osm_cache s3://turin-data1/ --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
+
+          - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+
+  - name: 'debian:bookworm-slim'
+    id: 'copy-directory-data'
+    dir: '/workspace/turin_build/'
+    entrypoint: 'bash'
+    args:
+        - '-c'
+        - |
+          set -eoux
+          mv /workspace/turin_build/.osm_cache /workspace/turin_graph/.osm_cache
+
+  - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
+    id: 'generate-artifact'
+    dir: '/workspace/turin_graph/'
+    entrypoint: 'bash'
+    args:
+        - '-c'
+        - |
+          gcloud builds submit \
+            --tag "southamerica-east1-docker.pkg.dev/$(gcloud config get-value project)/routing-api1/traffic-builder:latest" \
+            .
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -1,3 +1,5 @@
 .env
 .osm_cache
 .venv
+turin_graph/.osm_cache_backup/
+turin_graph/__pycache__/

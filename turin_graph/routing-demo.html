@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Routing Demo</title>
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+    }
+
+    #controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 12px;
+        background: white;
+        border-bottom: 1px solid #ddd;
+    }
+
+    #controls input {
+        width: 220px;
+        padding: 8px;
+        font-family: monospace;
+    }
+
+    #controls button {
+        padding: 8px 16px;
+        cursor: pointer;
+    }
+
+    #map {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+    }
+
+    #stats {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        background: white;
+        border-top: 1px solid #ddd;
+        font-family: monospace;
+        font-size: 13px;
+    }
+
+    #error {
+        color: #b00020;
+    }
+</style>
+
+</head>
+
+<body>
+<div id="controls">
+    <label for="start">Start:</label>
+    <input id="start" type="text" value="123456789">
+
+    <label for="end">End:</label>
+    <input id="end" type="text" value="987654321">
+
+    <button id="load">Load route</button>
+
+    <span id="status">Ready</span>
+</div>
+
+<div id="map"></div>
+
+<div id="stats">
+    <span>
+        Distance:
+        <strong id="distance">—</strong>
+    </span>
+
+    <span>
+        Points:
+        <strong id="points">—</strong>
+    </span>
+
+    <span>
+        Routing time:
+        <strong id="routing-time">—</strong>
+    </span>
+
+    <span>
+        Estimated travel:
+        <strong id="travel-time">—</strong>
+    </span>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    const API_URL = "http://localhost:8000/routing";
+
+    const map = L.map("map");
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap contributors"
+        }
+    ).addTo(map);
+
+    map.setView([-23.49, -46.85], 12);
+
+    let routeLayer = null;
+    let startMarker = null;
+    let endMarker = null;
+
+    const startInput = document.getElementById("start");
+    const endInput = document.getElementById("end");
+    const loadButton = document.getElementById("load");
+    const statusElement = document.getElementById("status");
+
+    const distanceElement =
+        document.getElementById("distance");
+
+    const pointsElement =
+        document.getElementById("points");
+
+    const routingTimeElement =
+        document.getElementById("routing-time");
+
+    const travelTimeElement =
+        document.getElementById("travel-time");
+
+
+    function clearRoute() {
+        if (routeLayer) {
+            map.removeLayer(routeLayer);
+            routeLayer = null;
+        }
+
+        if (startMarker) {
+            map.removeLayer(startMarker);
+            startMarker = null;
+        }
+
+        if (endMarker) {
+            map.removeLayer(endMarker);
+            endMarker = null;
+        }
+    }
+
+
+    function formatDistance(km) {
+        if (!Number.isFinite(km)) {
+            return "—";
+        }
+
+        if (km < 1) {
+            return `${Math.round(km * 1000)} m`;
+        }
+
+        return `${km.toFixed(2)} km`;
+    }
+
+
+    function formatTravelTime(hours) {
+        if (!Number.isFinite(hours)) {
+            return "—";
+        }
+
+        const minutes = Math.round(hours * 60);
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+
+        if (h === 0) {
+            return `${m} min`;
+        }
+
+        if (m === 0) {
+            return `${h} h`;
+        }
+
+        return `${h} h ${m} min`;
+    }
+
+
+    async function loadRoute() {
+        clearRoute();
+
+        distanceElement.textContent = "—";
+        pointsElement.textContent = "—";
+        routingTimeElement.textContent = "—";
+        travelTimeElement.textContent = "—";
+
+        const start = startInput.value.trim();
+        const end = endInput.value.trim();
+
+        if (!start || !end) {
+            statusElement.textContent =
+                "Enter both node IDs.";
+            return;
+        }
+
+        statusElement.textContent = "Routing...";
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    node_start: Number(start),
+                    node_end: Number(end)
+                })
+            });
+
+            if (!response.ok) {
+                let message = `HTTP ${response.status}`;
+
+                try {
+                    const body = await response.json();
+
+                    if (body.detail) {
+                        message += `: ${body.detail}`;
+                    }
+                } catch (_) {
+                }
+
+                throw new Error(message);
+            }
+
+            const result = await response.json();
+
+            if (result.routed === null) {
+                statusElement.textContent =
+                    result.detail || "No route found.";
+                return;
+            }
+
+            if (
+                !Array.isArray(result.routed) ||
+                result.routed.length === 0
+            ) {
+                throw new Error(
+                    "The server returned an empty route."
+                );
+            }
+
+            /*
+             * result.routed is already:
+             *
+             * [
+             *     [latitude, longitude],
+             *     [latitude, longitude],
+             *     ...
+             * ]
+             *
+             * Leaflet uses exactly this format.
+             */
+            const route = result.routed.map(point => {
+                const lat = Number(point[0]);
+                const lon = Number(point[1]);
+
+                if (
+                    !Number.isFinite(lat) ||
+                    !Number.isFinite(lon)
+                ) {
+                    throw new Error(
+                        "Invalid coordinate returned by server."
+                    );
+                }
+
+                return [lat, lon];
+            });
+
+            routeLayer = L.polyline(route, {
+                weight: 5,
+                opacity: 0.9,
+                lineJoin: "round",
+                lineCap: "round"
+            }).addTo(map);
+
+            startMarker = L.marker(route[0])
+                .addTo(map)
+                .bindPopup("Start");
+
+            endMarker = L.marker(route[route.length - 1])
+                .addTo(map)
+                .bindPopup("End");
+
+            map.fitBounds(
+                routeLayer.getBounds(),
+                {
+                    padding: [40, 40],
+                    maxZoom: 17
+                }
+            );
+
+            distanceElement.textContent =
+                formatDistance(
+                    Number(result.total_distance)
+                );
+
+            pointsElement.textContent =
+                route.length.toLocaleString();
+
+            const routingTime =
+                Number(result.time_spent);
+
+            if (Number.isFinite(routingTime)) {
+                routingTimeElement.textContent =
+                    `${(routingTime * 1000).toFixed(1)} ms`;
+            }
+
+            travelTimeElement.textContent =
+                formatTravelTime(
+                    Number(result.estimated_time_hours)
+                );
+
+            statusElement.textContent =
+                "Route loaded.";
+
+            requestAnimationFrame(() => {
+                map.invalidateSize();
+            });
+
+        } catch (error) {
+            statusElement.textContent =
+                `Request failed: ${error.message}`;
+        }
+    }
+
+
+    loadButton.addEventListener(
+        "click",
+        loadRoute
+    );
+
+
+    startInput.addEventListener(
+        "keydown",
+        event => {
+            if (event.key === "Enter") {
+                loadRoute();
+            }
+        }
+    );
+
+
+    endInput.addEventListener(
+        "keydown",
+        event => {
+            if (event.key === "Enter") {
+                loadRoute();
+            }
+        }
+    );
+
+
+    window.addEventListener(
+        "resize",
+        () => {
+            map.invalidateSize();
+        }
+    );
+
+
+    loadRoute();
+</script>
+
+
+</body>
+</html>
