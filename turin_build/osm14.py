@@ -44,9 +44,9 @@ HIGHWAY_UNKNOWN = 15
 
 HIGHWAY_SPEED_KMH = np.array([
     85,  # motorway
-    50,  # motorway_link
-    50,  # trunk
-    45,  # trunk_link
+    65,  # motorway_link
+    60,  # trunk
+    55,  # trunk_link
     45,  # primary
     35,  # primary_link
     40,  # secondary
@@ -85,18 +85,41 @@ class HighwayHandler(osmium.SimpleHandler):
         for node in w.nodes:
             refs.append(node.ref)
 
+        if len(refs) < 2:
+            return
+
         # Every consecutive pair is a directed edge
+        oneway = w.tags.get("oneway")
+        junction = w.tags.get("junction")
+
+        if oneway in ("-1", "reverse"):
+            refs.reverse()
+
+        is_bidirectional = (
+            oneway not in ("yes", "true", "1", "-1", "reverse")
+            and junction != "roundabout"
+        )
+
         for i in range(len(refs) - 1):
-            a, b = refs[i], refs[i + 1]
+            a = refs[i]
+            b = refs[i + 1]
+
             if a == b:
-                continue                    # skip self-loops
+                continue
+
             self.node_ids.add(a)
             self.node_ids.add(b)
+
             self.edges_from.append(a)
             self.edges_to.append(b)
             self.edges_highway.append(highway)
             self.edge_count += 1
 
+            if is_bidirectional:
+                self.edges_from.append(b)
+                self.edges_to.append(a)
+                self.edges_highway.append(highway)
+                self.edge_count += 1
 
 class CoordHandler(osmium.SimpleHandler):
     """Second pass: collect lat/lon for every node we care about.
@@ -166,13 +189,9 @@ def build_graph_streaming(pbf_path: Path, with_coords: bool = False):
     highway_codes = np.array([HIGHWAY_CODES.get(h, HIGHWAY_UNKNOWN) for h in handler.edges_highway], dtype=np.uint8)
     # Build directed edges: forward + reverse (bidirectional graph)
     #
-    all_rows = np.concatenate([rows, cols])
-    all_cols = np.concatenate([cols, rows])
-
-    all_highway_codes = np.concatenate([
-        highway_codes,
-        highway_codes,
-    ])
+    all_rows = rows
+    all_cols = cols
+    all_highway_codes = highway_codes
 
     # Deduplicate edges while preserving highway type.
     edge_map = {}

@@ -44,8 +44,13 @@ steps:
         osmium extract \
           --verbose \
           --polygon shape.geojson \
-          --output /workspace/turin_build/sudeste-extract.osm.pbf \
+          --output /workspace/turin_build/sudeste2.osm.pbf \
           /workspace/turin_build/sudeste.osm.pbf
+
+        osmium tags-filter /workspace/turin_build/sudeste2.osm.pbf \
+          --verbose \
+          w/highway=motorway,trunk,primary,secondary,tertiary,unclassified,residential,living_street,service,motorway_link,trunk_link,primary_link,secondary_link,tertiary_link \
+          -o /workspace/turin_build/sudeste-extract.osm.pbf
 
   # 4. Run Python processor
   - name: 'ghcr.io/astral-sh/uv:python3.13-bookworm-slim'
