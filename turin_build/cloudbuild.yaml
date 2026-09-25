@@ -86,16 +86,20 @@ steps:
           set -eoux
           mv /workspace/turin_build/.osm_cache /workspace/turin_graph/.osm_cache
 
-  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:stable'
+  - name: 'gcr.io/cloud-builders/docker'
     id: 'generate-artifact'
     dir: '/workspace/turin_graph/'
-    entrypoint: 'bash'
     args:
-        - '-c'
-        - |
-          gcloud builds submit \
-            --tag "southamerica-east1-docker.pkg.dev/$PROJECT_ID/routing-api1/traffic-builder:latest" \
-            .
+      - 'build'
+      - '-t'
+      - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/routing-api1/traffic-builder:latest'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-artifact'
+    args:
+      - 'push'
+      - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/routing-api1/traffic-builder:latest'
 
 options:
   logging: CLOUD_LOGGING_ONLY
