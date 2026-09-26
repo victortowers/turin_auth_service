@@ -59,6 +59,17 @@ def node_coordinates(node_psx):
 def radians(dict1):
     return np.radians(dict1)
 
+def heuristic_1(node_idx, lat2, lon2):
+    candidate_coords = node_coordinates(node_idx)
+    lat1, lon1 = radians(candidate_coords)
+    distance_lat = lat2 - lat1
+    distance_lon = lon2 - lon1
+
+    a = math.sin(distance_lat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(distance_lon/2)**2
+    distance_km = 2 * 6371 * math.asin(math.sqrt(a))
+
+    return distance_km
+
 def heuristic(node_idx, lat2, lon2):
     candidate_coords = node_coordinates(node_idx)
     lat1, lon1 = radians(candidate_coords)
@@ -66,13 +77,15 @@ def heuristic(node_idx, lat2, lon2):
     distance_lon = lon2 - lon1
 
     a = math.sin(distance_lat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(distance_lon/2)**2
-    return 2 * 6371 * math.asin(math.sqrt(a))
+    distance_km = 2 * 6371 * math.asin(math.sqrt(a))
+
+    return (distance_km / 85) * 3600
 
 def a_star(start1, end1):
     start_x = find_position(start1)
     end_x = find_position(end1)
     end_lat, end_lon = radians(node_coordinates(end_x))
-    d1 = heuristic(start_x, end_lat, end_lon)
+    d1 = heuristic_1(start_x, end_lat, end_lon)
 
     print(f"Route: OSM {start1} ({start_x}) to OSM {end1} ({end_x})")
     print(f"Straight distance is {round(d1, 4)} kilometres")
@@ -158,7 +171,7 @@ def location_search(payload: RoutingRequest, response: Response):
         if total_distance == "out_of_time":
             time2 = (monotonic() - time1) * 1000
             return {"total_distance": None, "routed": None, "time_spent": f"{time2:.3f} ms" , "detail": "Out of time. The limit for processing is 3210ms."}
-
+        print(total_distance)
         route_coordinates = [
             coordinates[find_position(node_id)].tolist()
             for node_id in routed

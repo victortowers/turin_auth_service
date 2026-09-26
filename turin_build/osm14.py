@@ -74,11 +74,46 @@ class HighwayHandler(osmium.SimpleHandler):
         self.edges_from: list[int] = []
         self.edges_highway: list[str] = []
         self.edges_to: list[int] = []
+        self.edges_speed: list[float | None] = []
+
+    def parse_maxspeed(self, value):
+        if not value:
+            return None
+
+        value = value.strip().lower()
+        if value.endswith("mph"):
+            try:
+                return float(value[:-3].strip()) * 1.609344
+            except ValueError:
+                return None
+
+        if value.endswith("km/h"):
+            try:
+                return float(value[:-4].strip())
+            except ValueError:
+                return None
+
+        if value.endswith("kph"):
+            try:
+                return float(value[:-3].strip())
+            except ValueError:
+                return None
+
+        try:
+             return float(value)
+        except ValueError:
+             return None
 
     def way(self, w):
         highway = w.tags.get("highway")
         if highway is None: return
         self.way_count += 1
+
+        highway = w.tags.get("highway")
+        if highway is None:
+            return
+
+        maxspeed = self.parse_maxspeed(w.tags.get("maxspeed"))
 
         # Collect ordered node references for this way
         refs: list[int] = []
@@ -113,12 +148,14 @@ class HighwayHandler(osmium.SimpleHandler):
             self.edges_from.append(a)
             self.edges_to.append(b)
             self.edges_highway.append(highway)
+            self.edges_speed.append(maxspeed)
             self.edge_count += 1
 
             if is_bidirectional:
                 self.edges_from.append(b)
                 self.edges_to.append(a)
                 self.edges_highway.append(highway)
+                self.edges_speed.append(maxspeed)
                 self.edge_count += 1
 
 class CoordHandler(osmium.SimpleHandler):
@@ -186,9 +223,18 @@ def build_graph_streaming(pbf_path: Path, with_coords: bool = False):
     rows = np.array([node_to_idx[n] for n in handler.edges_from], dtype=np.int32)
     cols = np.array([node_to_idx[n] for n in handler.edges_to],   dtype=np.int32)
 
-    highway_codes = np.array([HIGHWAY_CODES.get(h, HIGHWAY_UNKNOWN) for h in handler.edges_highway], dtype=np.uint8)
-    # Build directed edges: forward + reverse (bidirectional graph)
-    #
+    highway_codes = np.array(
+        [HIGHWAY_CODES.get(h, HIGHWAY_UNKNOWN)
+         for h in handler.edges_highway],
+        dtype=np.uint8
+    )
+
+    edge_speeds = np.array([
+        speed if speed is not None
+        else HIGHWAY_SPEED_KMH[HIGHWAY_CODES.get(h, HIGHWAY_UNKNOWN)]
+        for speed, h in zip(handler.edges_speed, handler.edges_highway)
+    ], dtype=np.float32)
+
     all_rows = rows
     all_cols = cols
     all_highway_codes = highway_codes
@@ -260,6 +306,7 @@ def build_graph_streaming(pbf_path: Path, with_coords: bool = False):
 
         new_data = np.zeros(len(adj.data), dtype=np.float32)
         edge_data = np.zeros(len(adj.data), dtype=np.float32)
+
         for u in range(N):
             row_start = adj.indptr[u]
             row_end   = adj.indptr[u + 1]
@@ -277,12 +324,13 @@ def build_graph_streaming(pbf_path: Path, with_coords: bool = False):
                      cos1 * math.cos(lat2) * math.sin(dlon/2)**2)
                 new_data[i] = 2 * 6371 * math.asin(math.sqrt(a))
 
-                speed = HIGHWAY_SPEED_KMH[edge_highway[i]]
+                speed = edge_speeds[i]
 
                 distance_km = new_data[i]
-                edge_data[i] = (distance_km/ speed) * 3600
 
-        adj.data = new_data.astype(np.float32)
+                edge_data[i] = (distance_km / speed) * 3600
+
+        adj.data = edge_data.astype(np.float32)
         print(f"    Computed {len(new_data):,} edge distances in {time.time() - t_dist:.1f}s")
 
     else:
@@ -293,12 +341,16 @@ def build_graph_streaming(pbf_path: Path, with_coords: bool = False):
     t4 = time.time()
     adj_csr = adj.tocsr()
 
-    np.save(cache_dir / "data.npy",    adj_csr.data.astype(np.float32))
-    np.save(cache_dir / "indices.npy", adj_csr.indices.astype(np.int32))
-    np.save(cache_dir / "indptr.npy",  adj_csr.indptr.astype(np.int32))
-    np.save(cache_dir / "shape.npy",   np.array(adj_csr.shape, dtype=np.int32))
-    np.save(cache_dir / "edge_highway.npy",edge_highway.astype(np.float32))
-    np.save(cache_dir / "node_ids.npy", node_list)
+    np.save(cache_dir / "data.npy",         adj_csr.data.astype(np.float32))
+    np.save(cache_dir / "indices.npy",      adj_csr.indices.astype(np.int32))
+    np.save(cache_dir / "indptr.npy",       adj_csr.indptr.astype(np.int32))
+    np.save(cache_dir / "shape.npy",        np.array(adj_csr.shape, dtype=np.int32))
+
+    np.save(cache_dir / "edge_highway.npy", edge_highway.astype(np.float32))
+    np.save(cache_dir / "edge_speed.npy",   edge_speeds.astype(np.float32))
+    np.save(cache_dir / "edge_eta.npy",     edge_data.astype(np.float32))
+    np.save(cache_dir / "node_ids.npy",     node_list)
+
     if coords_array is not None:
         np.save(cache_dir / "node_coords.npy", coords_array)
 
