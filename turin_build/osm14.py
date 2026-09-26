@@ -43,7 +43,7 @@ HIGHWAY_CODES = {
 HIGHWAY_UNKNOWN = 15
 
 HIGHWAY_SPEED_KMH = np.array([
-    85,  # motorway
+    110,  # motorway
     65,  # motorway_link
     60,  # trunk
     55,  # trunk_link

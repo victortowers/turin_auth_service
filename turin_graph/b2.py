@@ -157,6 +157,7 @@ end = 245374595 # (Aeroporto de Guarulhos)
 #end = 2868730635 # (Vila Galé Angra dos Reis)
 #end = 493141051 # (Praia Grande)
 #end = 1669971805 # (Taubaté)
+# 7891860433 (Mogi das Cruzes)
 #end = 12099764350 # (Shopping Village Mall, Rio de Janeiro)
 # hi
 #1379439636 #(Shopping Morumbi)
@@ -184,7 +185,7 @@ def location_search(payload: RoutingRequest, response: Response):
         return {
         "total_distance": total_distance,
         "time_spent": monotonic() - time1,
-        "estimated_time_hours": start / 3600,
+        "estimated_time_hours": total_distance,
         "routed": route_coordinates,
 
         }
