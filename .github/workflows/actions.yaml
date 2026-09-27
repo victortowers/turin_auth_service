@@ -70,7 +70,6 @@ jobs:
           SCHEMATHESIS_HOOKS: hook.py
           SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
           SCHEMATHESIS_COVERAGE_REPORT_HTML_PATH: "schema-coverage.html"
-
         with:
           schema: 'http://localhost:8080/openapi.json'
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
