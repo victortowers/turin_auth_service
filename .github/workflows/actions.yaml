@@ -51,6 +51,11 @@ jobs:
         working-directory: ./turin_graph
         run: docker compose up -d
 
+      - name: Wait for API
+        run: |
+          timeout 60 bash -c \
+            'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
+
       - uses: schemathesis/action@v3
         with:
           schema: 'http://localhost:8000/openapi.json'
@@ -63,6 +68,7 @@ jobs:
         with:
           name: schemathesis-results
           path: schemathesis-report/
+          retention-days: 7
 
       - name: Cleanup
         if: always()

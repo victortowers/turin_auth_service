@@ -5,4 +5,11 @@ services:
     restart: unless-stopped
 
     ports:
-      - "8000:8000"
+      - "8080:8080"
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/openapi.json')"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
