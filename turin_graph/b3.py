@@ -30,7 +30,7 @@ class RoutingRequest(BaseModel):
 
 def find_position(node_idx):
     position = int(np.searchsorted(node_ids, node_idx))
-    assert node_ids[position] == node_idx
+    assert position < len(node_ids) and node_ids[position] == node_idx
     return position
 
 def reverse_position(position_x):
@@ -99,8 +99,11 @@ def heuristic_1(node_idx, lat2, lon2):
     return (distance_km / 28) * 3600
 
 def a_star(start1, end1):
-    start_x = find_position(start1)
-    end_x = find_position(end1)
+    try:
+        start_x = find_position(start1)
+        end_x = find_position(end1)
+    except Exception:
+        raise HTTPException(status_code=422, details="Invalid Start or End Nodes.")
 
     end_lat, end_lon = radians(node_coordinates(end_x))
 
@@ -115,7 +118,7 @@ def a_star(start1, end1):
 
     visited = set()
     nodes_explored = 0
-    deadlined = time.monotonic() + 3.21
+    deadlined = time.monotonic() + 2.21
 
     while pq and time.monotonic() < deadlined:
         estimated, time_travelled, current_row, row_path = heapq.heappop(pq)
@@ -196,7 +199,7 @@ def location_search(payload: RoutingRequest, response: Response):
                 "estimated_time_hours": None,
                 "routed": None,
                 "time_spent": f"{time2:.3f} ms",
-                "detail": "Out of time. The limit for processing is 3510ms.",
+                "detail": "Out of time. The limit for processing is 2210ms.",
             }
 
         route_coordinates = [
