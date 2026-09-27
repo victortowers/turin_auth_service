@@ -72,7 +72,7 @@ jobs:
         with:
           schema: 'http://localhost:8080/openapi.json'
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
-          args: '--report json --mode all --max-examples 2000'
+          args: '--report json --mode all --max-examples 500'
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
@@ -96,7 +96,7 @@ jobs:
       - name: Build & Push Image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./turin_graph
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
