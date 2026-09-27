@@ -45,11 +45,28 @@ jobs:
 
       - name: Build container
         working-directory: ./turin_graph
-        run: docker build -t .
+        run: docker build -t turin-container:latest .
 
       - name: Start services
         working-directory: ./turin_graph
         run: docker compose up -d
+
+      - uses: schemathesis/action@v3
+        with:
+          schema: 'http://localhost:8080/openapi.json'
+          authorization: 'Bearer ${{ secrets.API_TOKEN }}'
+          args: '--report json'
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: schemathesis-results
+          path: schemathesis-report/
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down
 
       - name: Login to GHCR
         uses: docker/login-action@v3
