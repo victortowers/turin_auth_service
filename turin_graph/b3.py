@@ -103,7 +103,7 @@ def a_star(start1, end1):
         start_x = find_position(start1)
         end_x = find_position(end1)
     except Exception:
-        raise HTTPException(status_code=422, details="Invalid Start or End Nodes.")
+        raise HTTPException(status_code=422, detail="Invalid Start or End Nodes.")
 
     end_lat, end_lon = radians(node_coordinates(end_x))
 
