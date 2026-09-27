@@ -106,6 +106,15 @@ steps:
       - 'push'
       - 'southamerica-east1-docker.pkg.dev/$PROJECT_ID/routing-api1/traffic-builder:latest'
 
+  - name: 'gcr.io/google.com/cloudsdktool/google-cloud-cli:stable'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy traffic-builder \
+          --image "southamerica-east1-docker.pkg.dev/$PROJECT_ID/routing-api1/traffic-builder:latest" \
+          --region southamerica-east1
+
 options:
   logging: CLOUD_LOGGING_ONLY
 
