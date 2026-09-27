@@ -36,12 +36,13 @@ jobs:
         run: uv sync --locked
 
       - name: Download Application Data
+        working-directory: ./turin_graph
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
 
-        run: mkdir -p .osm_data && aws s3 sync "s3://${{ secrets.R2_BUCKET}}" ./osm_data --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+        run: mkdir -p .osm_data && aws s3 sync "s3://${{ secrets.R2_BUCKET}}" ./osm_data --endpoint-url "${{ secrets.R2_ENDPOINT }}" && dir
 
       - name: Build container
         working-directory: ./turin_graph
