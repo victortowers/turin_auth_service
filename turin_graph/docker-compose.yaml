@@ -1,0 +1,8 @@
+services:
+  traffic-test:
+    image: turin-container:latest
+    container_name: turin_test
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
