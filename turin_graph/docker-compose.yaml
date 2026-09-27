@@ -12,4 +12,4 @@ services:
       interval: 2s
       timeout: 5s
       retries: 15
-      start_period: 5s
+      start_period: 0s
