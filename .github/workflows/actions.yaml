@@ -67,7 +67,6 @@ jobs:
 
       - uses: schemathesis/action@v3
         env:
-          SCHEMATHESIS_HOOKS: hook.py
           SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
           SCHEMATHESIS_COVERAGE_REPORT_HTML_PATH: "schema-coverage.html"
         with:
