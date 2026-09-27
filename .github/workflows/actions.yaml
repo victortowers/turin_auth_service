@@ -66,10 +66,15 @@ jobs:
             'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
       - uses: schemathesis/action@v3
+        env:
+          SCHEMATHESIS_HOOKS: hook.py
+          SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
+          SCHEMATHESIS_COVERAGE_REPORT_HTML_PATH: "schema-coverage.html"
+
         with:
           schema: 'http://localhost:8080/openapi.json'
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
-          args: '--report json'
+          args: '--report json --mode all --max-examples 2000'
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
