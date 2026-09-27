@@ -67,7 +67,7 @@ jobs:
 
       - uses: schemathesis/action@v3
         with:
-          schema: 'http://localhost:8000/openapi.json'
+          schema: 'http://localhost:8080/openapi.json'
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
           args: '--report json'
 
