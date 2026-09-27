@@ -184,7 +184,8 @@ end = 245374595 # (Aeroporto de Guarulhos)
 #1379439636 #(Shopping Morumbi)
 @app.post(
     "/routing",
-    responses={404: {"description": "Invalid Start or End Nodes (not found in Database)."}},
+    responses={400: {"description": "Malformed request body"},
+    404: {"description": "Invalid Start or End Nodes (not found in Database)."}},
 )
 def location_search(payload: RoutingRequest, response: Response):
     try:
