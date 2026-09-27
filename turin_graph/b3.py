@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response, Cookie, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, StrictInt
 from time import monotonic
 import scipy.sparse as sp
 import numpy as np
@@ -25,8 +25,8 @@ app.add_middleware(
 )
 
 class RoutingRequest(BaseModel):
-    node_start: int
-    node_end: int
+    node_start: StrictInt
+    node_end: StrictInt
 
 def find_position(node_idx):
     position = int(np.searchsorted(node_ids, node_idx))
