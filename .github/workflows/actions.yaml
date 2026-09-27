@@ -51,15 +51,17 @@ jobs:
         working-directory: ./turin_graph
         run: docker compose up -d
 
-      - name: Debug API
-        if: always()
+      - name: Debug container
         run: |
+          docker compose ps
+          docker compose logs --no-color traffic-test
+          sleep 5
           docker compose ps
           docker compose logs --no-color traffic-test
 
       - name: Wait for API
         run: |
-          timeout 60 bash -c \
+          timeout 10 bash -c \
             'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
       - uses: schemathesis/action@v3
