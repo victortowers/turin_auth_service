@@ -103,7 +103,7 @@ def a_star(start1, end1):
         start_x = find_position(start1)
         end_x = find_position(end1)
     except Exception:
-        raise HTTPException(status_code=422, detail="Invalid Start or End Nodes.")
+        raise HTTPException(status_code=400, detail="Invalid Start or End Nodes.")
 
     end_lat, end_lon = radians(node_coordinates(end_x))
 
@@ -182,7 +182,10 @@ end = 245374595 # (Aeroporto de Guarulhos)
 #end = 12099764350 # (Shopping Village Mall, Rio de Janeiro)
 # hi
 #1379439636 #(Shopping Morumbi)
-@app.post("/routing")
+@app.post(
+    "/routing",
+    responses={400: {"description": "Invalid Start or End Nodes"}},
+)
 def location_search(payload: RoutingRequest, response: Response):
     try:
         node_start = payload.node_start
