@@ -60,27 +60,12 @@ def radians(dict1):
     return np.radians(dict1)
 
 def heuristic(node_idx, lat2, lon2):
-    candidate_coords = node_coordinates(node_idx)
-
-    lat1, lon1 = radians(candidate_coords)
-
-    distance_lat = lat2 - lat1
-    distance_lon = lon2 - lon1
-
-    a = (
-        math.sin(distance_lat / 2) ** 2
-        + math.cos(lat1)
-        * math.cos(lat2)
-        * math.sin(distance_lon / 2) ** 2
-    )
-
-    distance_km = 2 * 6371 * math.asin(math.sqrt(a))
-
-    # Convert straight-line distance to a lower-bound travel time.
-    # km / (km/h) * 3600 = seconds
-    return (distance_km/ 95) * 3600
+    return (straight_distance(node_idx, lat2, lon2)/ 95) * 3600
 
 def heuristic_1(node_idx, lat2, lon2):
+    return (straight_distance(node_idx, lat2, lon2) / 28) * 3600
+
+def straight_distance(node_idx, lat2, lon2):
     candidate_coords = node_coordinates(node_idx)
     lat1, lon1 = radians(candidate_coords)
 
@@ -96,7 +81,7 @@ def heuristic_1(node_idx, lat2, lon2):
 
     distance_km = 2 * 6371 * math.asin(math.sqrt(a))
 
-    return (distance_km / 28) * 3600
+    return distance_km
 
 def a_star(start1, end1):
     try:
@@ -107,7 +92,7 @@ def a_star(start1, end1):
 
     end_lat, end_lon = radians(node_coordinates(end_x))
 
-    d1 = heuristic(start_x, end_lat, end_lon)
+    d1 = straight_distance(start_x, end_lat, end_lon)
 
     print(f"Route: OSM {start1} ({start_x}) to OSM {end1} ({end_x})")
     print(f"Straight distance is {d1:.4f} kilometres")
@@ -153,12 +138,12 @@ def a_star(start1, end1):
 
 
 coordinates = np.load(".osm_cache/node_coords.npy") #1
-node_ids = np.load(".osm_cache/node_ids.npy", mmap_mode="r")
+node_ids = np.load(".osm_cache/node_ids.npy")
 indices = np.load(".osm_cache/indices.npy") #2
 
 data = np.load(".osm_cache/data.npy") #3
 shape = np.load(".osm_cache/shape.npy", mmap_mode="r")
-indptr = np.load(".osm_cache/indptr.npy", mmap_mode="r") #4
+indptr = np.load(".osm_cache/indptr.npy") #4
 #edge_distance = np.load(".osm_cache/edge_distance.npy", mmap_mode="r")
 #edge_speed = np.load(".osm_cache/edge_speed.npy", mmap_mode="r")
 
