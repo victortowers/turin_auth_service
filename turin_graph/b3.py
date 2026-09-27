@@ -145,14 +145,13 @@ def a_star(start1, end1):
             h1 = heuristic_1(node_x, end_lat, end_lon)
 
             heapq.heappush(pq,(new_time + h1, new_time, node_x, row_path + [node_x]))
-            print(new_time)
 
     return "out_of_time", "out_of_time"
 
 
-coordinates = np.load(".osm_cache/node_coords.npy",mmap_mode="r") #1
+coordinates = np.load(".osm_cache/node_coords.npy") #1
 node_ids = np.load(".osm_cache/node_ids.npy", mmap_mode="r")
-indices = np.load(".osm_cache/indices.npy", mmap_mode="r") #2
+indices = np.load(".osm_cache/indices.npy") #2
 
 data = np.load(".osm_cache/data.npy") #3
 shape = np.load(".osm_cache/shape.npy", mmap_mode="r")

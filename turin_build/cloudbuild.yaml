@@ -111,6 +111,7 @@ steps:
     args:
       - '-c'
       - |
+        set -eoux
         gcloud run deploy traffic-builder \
           --image "southamerica-east1-docker.pkg.dev/$PROJECT_ID/routing-api1/traffic-builder:latest" \
           --region southamerica-east1
