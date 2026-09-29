@@ -118,6 +118,7 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  workerRelease: rapid
 
 availableSecrets:
   secretManager:

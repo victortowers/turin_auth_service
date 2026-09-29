@@ -28,6 +28,12 @@ class RoutingRequest(BaseModel):
     node_start: StrictInt
     node_end: StrictInt
 
+class RouteResponse(BaseModel):
+    total_distance_meters: int
+    estimated_time_hours: float
+    routed: dict
+    computation_time_ms: int
+
 def find_position(node_idx):
     position = int(np.searchsorted(node_ids, node_idx))
     assert position < len(node_ids) and node_ids[position] == node_idx
@@ -172,7 +178,7 @@ end = 245374595 # (Aeroporto de Guarulhos)
     responses={400: {"description": "Malformed request body"},
     404: {"description": "Invalid Start or End Nodes (not found in Database)."}},
 )
-def location_search(payload: RoutingRequest, response: Response):
+def location_search(payload: RoutingRequest, response_model: RouteResponse, response: Response):
     try:
         node_start = payload.node_start
         node_end = payload.node_end
