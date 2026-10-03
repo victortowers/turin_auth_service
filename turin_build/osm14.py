@@ -38,18 +38,19 @@ HIGHWAY_CODES = {
     "service": 12,
     "living_street": 13,
     "road": 14,
+    "driveway": 15,
 }
 
-HIGHWAY_UNKNOWN = 15
+HIGHWAY_UNKNOWN = 16
 
 HIGHWAY_SPEED_KMH = np.array([
     110,  # motorway
     65,  # motorway_link
     60,  # trunk
     55,  # trunk_link
-    45,  # primary
+    50,  # primary
     35,  # primary_link
-    40,  # secondary
+    45,  # secondary
     30,  # secondary_link
     30,  # tertiary
     25,  # tertiary_link
@@ -58,6 +59,7 @@ HIGHWAY_SPEED_KMH = np.array([
     10,  # service
     20,  # living_street
     20,  # road
+    7,   # driveway
     0.0001,   # Unknown Type
 ], dtype=np.float32)
 
