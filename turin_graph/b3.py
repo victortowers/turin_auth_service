@@ -25,8 +25,8 @@ app.add_middleware(
 )
 
 class RoutingRequest(BaseModel):
-    node_start: StrictInt
-    node_end: StrictInt
+    node_start: int
+    node_end: int
 
 class RouteResponse(BaseModel):
     total_distance_meters: int
@@ -178,12 +178,15 @@ end = 245374595 # (Aeroporto de Guarulhos)
     responses={400: {"description": "Malformed request body"},
     404: {"description": "Invalid Start or End Nodes (not found in Database)."}},
 )
-def location_search(payload: RoutingRequest, response_model: RouteResponse, response: Response):
+def location_search(payload: RoutingRequest, response: Response):
+    print("New request")
     try:
         node_start = payload.node_start
         node_end = payload.node_end
         time1 = monotonic()
 
+
+        print(node_start, node_end)
         total_eta, routed = a_star(node_start, node_end)
 
         if total_eta == "out_of_time":
