@@ -142,7 +142,7 @@ def a_star(start1, end1):
 
     return "out_of_time", "out_of_time"
 
-
+print("=== GRAPH LOAD START ===", flush=True)
 coordinates = np.load(".osm_cache/node_coords.npy") #1
 node_ids = np.load(".osm_cache/node_ids.npy")
 indices = np.load(".osm_cache/indices.npy") #2
@@ -155,7 +155,11 @@ indptr = np.load(".osm_cache/indptr.npy") #4
 
 A = sp.csr_matrix((data, indices, indptr), shape=tuple(shape))
 
-benchmark_count = 1000000
+
+print("=== GRAPH LOAD COMPLETE ===", flush=True)
+
+benchmark_count = 1_000_000
+
 random_indices = np.random.randint(
     0,
     len(data),
@@ -163,7 +167,8 @@ random_indices = np.random.randint(
     dtype=np.intp,
 )
 
-# Warm up
+print("=== MEMORY BENCHMARK START ===", flush=True)
+
 _ = data[random_indices].sum()
 
 start = time.perf_counter()
@@ -171,8 +176,9 @@ result = data[random_indices].sum()
 elapsed = time.perf_counter() - start
 
 print(
-    f"Random memory access: {benchmark_count:,} accesses "
-    f"in {elapsed:.4f}s (0.020s expected)"
+    f"Random memory access: "
+    f"{benchmark_count:,} accesses in {elapsed:.4f}s (expected 0.020s)",
+    flush=True,
 )
 
 # --- basic stats ---
