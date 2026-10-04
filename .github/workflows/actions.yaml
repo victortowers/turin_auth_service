@@ -65,6 +65,7 @@ jobs:
           timeout 10 bash -c \
             'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
+
       - uses: schemathesis/action@v3
         env:
           SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
@@ -73,6 +74,43 @@ jobs:
           schema: 'http://localhost:8080/openapi.json'
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
           args: '--report json --mode all --max-examples 500'
+
+      - name: Testing Routing
+        shell: bash
+        run: |
+          test_route() {
+            local start="$1"
+            local end="$2"
+            local baseline="$3"
+            local response
+
+            echo ""
+            echo "========================================"
+            echo "Testing $start -> $end"
+            echo "Baseline: ${baseline}s"
+            echo "========================================"
+
+            response=$(mktemp)
+
+            curl --fail-with-body \
+              -sS \
+              -o "$response" \
+              -w "HTTP status: %{http_code}\nRequest time: %{time_total}s\n" \
+              -X POST \
+              http://localhost:8080/routing \
+              -H "Content-Type: application/json" \
+              -d "{\"node_start\": $start, \"node_end\": $end}"
+
+            echo "Response:"
+            cat "$response"
+            echo ""
+
+            rm "$response"
+          }
+
+          test_route 4363722848 987654321 0.25
+          test_route 1001568698 245374595 1.500
+          test_route 7040000553 1871768924 1.50
 
       - name: Upload test results
         uses: actions/upload-artifact@v7

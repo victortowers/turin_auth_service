@@ -45,7 +45,7 @@ HIGHWAY_UNKNOWN = 16
 
 HIGHWAY_SPEED_KMH = np.array([
     110,  # motorway
-    65,  # motorway_link
+    75,  # motorway_link
     60,  # trunk
     55,  # trunk_link
     50,  # primary
