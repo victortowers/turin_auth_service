@@ -69,7 +69,7 @@ def heuristic(node_idx, lat2, lon2):
     return (straight_distance(node_idx, lat2, lon2)/ 95) * 3600
 
 def heuristic_1(node_idx, lat2, lon2):
-    return (straight_distance(node_idx, lat2, lon2) / 21) * 3600
+    return (straight_distance(node_idx, lat2, lon2) / 1) * 3600
 
 def straight_distance(node_idx, lat2, lon2):
     candidate_coords = node_coordinates(node_idx)
