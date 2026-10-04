@@ -92,7 +92,6 @@ jobs:
 
             curl --fail-with-body \
               -sS \
-              -o "$response" \
               -w "HTTP status: %{http_code}\nRequest time: %{time_total}s\n" \
               -X POST \
               http://localhost:8080/routing \
