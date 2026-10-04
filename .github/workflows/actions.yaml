@@ -75,7 +75,7 @@ jobs:
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
           args: '--report json --mode all --max-examples 500'
 
-      - name: Testing Routing
+      - name: Routing Testing - Speed Targets
         shell: bash
         run: |
           test_route() {
@@ -89,18 +89,34 @@ jobs:
             echo "Baseline: ${baseline}s"
             echo "========================================"
 
+            response=$(mktemp)
+
             curl --fail-with-body \
               -sS \
+              -o "$response" \
               -w "HTTP status: %{http_code}\nRequest time: %{time_total}s\n" \
               -X POST \
               http://localhost:8080/routing \
-              -H "Content-Type: application/json" \
               -d "{\"node_start\": $start, \"node_end\": $end}"
+
+            jq '{
+              total_distance,
+              estimated_time_seconds,
+              estimated_time_hours,
+              time_spent
+            }' "$response"
+
+            rm "$response"
           }
 
-          test_route 1001568698 1871768924 0.750
-          test_route 1001568698 245374595 1.500
-          test_route 7040000553 1871768924 1.50
+          test_route 1001568698 1871768924 0.300
+          test_route 1001568698 245374595 0.425
+          test_route 7040000553 245374595 1.000
+          test_route 1656860075 1685204217 2.000
+          test_route 1370531022 60685624 0.200
+          test_route 7805862127 12480848899 0.080
+          test_route 2922839021 2996077312 0.350
+          test_route 2908684794 1813227883 0.225
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
