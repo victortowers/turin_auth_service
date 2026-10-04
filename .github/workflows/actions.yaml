@@ -101,3 +101,14 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Trigger Cloud Build
+        if: success()
+        env:
+          CLOUD_BUILD_WEBHOOK: ${{ secrets.CLOUDBUILD_URL }}
+          run: |
+            curl --fail-with-body \
+            -X POST \
+            -H "Content-Type: application/json" \
+            "$CLOUD_BUILD_WEBHOOK" \
+            -d '{}'
