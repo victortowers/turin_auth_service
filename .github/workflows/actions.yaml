@@ -106,7 +106,7 @@ jobs:
         if: success()
         env:
           CLOUD_BUILD_WEBHOOK: ${{ secrets.CLOUDBUILD_URL }}
-          run: |
+        run: |
             curl --fail-with-body \
             -X POST \
             -H "Content-Type: application/json" \
