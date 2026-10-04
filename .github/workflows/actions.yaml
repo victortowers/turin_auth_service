@@ -65,7 +65,6 @@ jobs:
           timeout 10 bash -c \
             'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
-
       - uses: schemathesis/action@v3
         env:
           SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
@@ -97,6 +96,7 @@ jobs:
               -w "HTTP status: %{http_code}\nRequest time: %{time_total}s\n" \
               -X POST \
               http://localhost:8080/routing \
+              -H "Content-Type: application/json" \
               -d "{\"node_start\": $start, \"node_end\": $end}"
 
             jq '{
