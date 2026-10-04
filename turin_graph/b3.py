@@ -155,6 +155,26 @@ indptr = np.load(".osm_cache/indptr.npy") #4
 
 A = sp.csr_matrix((data, indices, indptr), shape=tuple(shape))
 
+benchmark_count = 1000000
+random_indices = np.random.randint(
+    0,
+    len(data),
+    benchmark_count,
+    dtype=np.intp,
+)
+
+# Warm up
+_ = data[random_indices].sum()
+
+start = time.perf_counter()
+result = data[random_indices].sum()
+elapsed = time.perf_counter() - start
+
+print(
+    f"Random memory access: {benchmark_count:,} accesses "
+    f"in {elapsed:.4f}s (0.020s expected)"
+)
+
 # --- basic stats ---
 print("nodes:", A.shape[0], "| directed edges:", A.nnz,"| avg degree: %.2f" % (A.nnz / A.shape[0]))
 
