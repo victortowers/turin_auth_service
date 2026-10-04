@@ -82,7 +82,6 @@ jobs:
             local start="$1"
             local end="$2"
             local baseline="$3"
-            local response
 
             echo ""
             echo "========================================"
