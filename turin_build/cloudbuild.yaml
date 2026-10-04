@@ -80,7 +80,7 @@ steps:
           export AWS_SECRET_ACCESS_KEY="$$R2_SECRET_ACCESS_KEY"
           export AWS_DEFAULT_REGION="auto"
 
-          aws s3 sync /workspace/turin_build/ s3://turin-graph1/ --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com" --exclude "*" --include "sudeste-extract.osm.pbf"         
+          aws s3 sync /workspace/turin_build/ s3://turin-graph1/ --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com" --exclude "*" --include "sudeste-extract.osm.pbf"
           aws s3 sync /workspace/turin_build/.osm_cache s3://turin-data1/ --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
 
   - name: 'debian:bookworm-slim'
