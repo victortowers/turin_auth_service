@@ -74,9 +74,106 @@ jobs:
           authorization: 'Bearer ${{ secrets.API_TOKEN }}'
           args: '--report json --mode all --max-examples 500'
 
+
+      - name: Wait for API
+        shell: bash
+        run: |
+          timeout 60 bash -c \
+            'until curl -fsS http://localhost:8000/openapi.json > /dev/null; do sleep 1; done'
+
+      - name: Authenticate Firebase CI user
+        shell: bash
+        env:
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          FIREBASE_TEST_EMAIL: ${{ secrets.FIREBASE_TEST_EMAIL }}
+          FIREBASE_TEST_PASSWORD: ${{ secrets.FIREBASE_TEST_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          LOGIN_RESPONSE=$(curl --fail-with-body -sS \
+            -X POST \
+            "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg email "$FIREBASE_TEST_EMAIL" \
+              --arg password "$FIREBASE_TEST_PASSWORD" \
+              '{email:$email,password:$password,returnSecureToken:true}')")
+
+          ID_TOKEN=$(jq -er '.idToken' <<< "$LOGIN_RESPONSE")
+
+          echo "::add-mask::$ID_TOKEN"
+
+          # Exchange Firebase ID token for the server's session cookie.
+          HEADERS=$(mktemp)
+          BODY=$(mktemp)
+          trap 'rm -f "$HEADERS" "$BODY"' EXIT
+
+          curl --fail-with-body -sS \
+            -D "$HEADERS" \
+            -o "$BODY" \
+            -X POST http://localhost:8000/sessionLogin \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')"
+
+          SESSION_COOKIE=$(grep -i '^set-cookie: __Secure-turin_session=' "$HEADERS" \
+            | head -n 1 \
+            | sed -E 's/^[^:]+:[[:space:]]*([^;]+).*/\1/' \
+            | tr -d '\r' || true)
+
+          if [[ -z "$SESSION_COOKIE" ]]; then
+            echo "ERROR: Session cookie was not returned."
+            cat "$BODY"
+            exit 1
+          fi
+
+          echo "::add-mask::$SESSION_COOKIE"
+
+          # Make the cookie available to subsequent workflow steps.
+          echo "SESSION_COOKIE=$SESSION_COOKIE" >> "$GITHUB_ENV"
+
+          echo "Firebase session exchange succeeded."
+
+      - name: Verify authenticated API access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          STATUS=$(curl -sS \
+            -o /tmp/auth-test-response.json \
+            -w '%{http_code}' \
+            -X POST http://localhost:8000/routing \
+            -H "Content-Type: application/json" \
+            -H "Cookie: ${SESSION_COOKIE}" \
+            -d '{"node_start":1001568698,"node_end":1871768924}')
+
+          if [[ "$STATUS" != "200" ]]; then
+            echo "Authenticated routing request failed: HTTP $STATUS"
+            cat /tmp/auth-test-response.json
+            exit 1
+          fi
+
+          echo "PASS: Session cookie accepted by /routing."
+
+      - name: Schemathesis API tests
+        shell: bash
+        env:
+          SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
+          SCHEMATHESIS_COVERAGE_REPORT_HTML_PATH: "schema-coverage.html"
+        run: |
+          set -euo pipefail
+
+          uvx schemathesis run \
+            http://localhost:8000/openapi.json \
+            --header "Cookie: ${SESSION_COOKIE}" \
+            --report json \
+            --mode all \
+            --max-examples 500
+
       - name: Routing Testing - Speed Targets
         shell: bash
         run: |
+          set -euo pipefail
+
           test_route() {
             local start="$1"
             local end="$2"
@@ -88,6 +185,7 @@ jobs:
             echo "Baseline: ${baseline}s"
             echo "========================================"
 
+            local response
             response=$(mktemp)
 
             curl --fail-with-body \
@@ -95,8 +193,9 @@ jobs:
               -o "$response" \
               -w "HTTP status: %{http_code}\nRequest time: %{time_total}s\n" \
               -X POST \
-              http://localhost:8080/routing \
+              http://localhost:8000/routing \
               -H "Content-Type: application/json" \
+              -H "Cookie: ${SESSION_COOKIE}" \
               -d "{\"node_start\": $start, \"node_end\": $end}"
 
             jq '{
@@ -117,6 +216,7 @@ jobs:
           test_route 7805862127 12480848899 0.080
           test_route 2922839021 2996077312 0.350
           test_route 2908684794 1813227883 0.225
+
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
