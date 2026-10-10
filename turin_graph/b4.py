@@ -217,16 +217,30 @@ end = 245374595 # (Aeroporto de Guarulhos)
 # hi
 #1379439636 #(Shopping Morumbi)
 #
-async def require_auth(session_cookie: str | None = Cookie(default=None, alias="__Secure-turin_session")) -> dict:
+async def require_auth(
+    session_cookie: str | None = Cookie(
+        default=None,
+        alias="__Secure-turin_session",
+    ),
+) -> dict:
     if not session_cookie:
-        raise HTTPException(status_code=401, detail="Invalid session") from None
+        print("Auth failed: session cookie was not received")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid session",
+        ) from None
+
     try:
         return auth.verify_session_cookie(
             session_cookie,
             check_revoked=True,
         )
-    except auth.InvalidSessionCookieError:
-        raise HTTPException(status_code=401, detail="Invalid session") from None
+    except Exception:
+        print("Firebase session-cookie verification failed")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid session",
+        ) from None
 
 
 @app.post(
