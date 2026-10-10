@@ -110,13 +110,22 @@ jobs:
           BODY=$(mktemp)
           trap 'rm -f "$HEADERS" "$BODY"' EXIT
 
-          curl --fail-with-body -sS \
+          HTTP_STATUS=$(curl -sS \
             -D "$HEADERS" \
             -o "$BODY" \
+            -w '%{http_code}' \
             -X POST \
-            "http://localhost:8080/sessionLogin" \
+            http://localhost:8080/sessionLogin \
             -H "Content-Type: application/json" \
-            -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')"
+            -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')")
+
+          echo "Session login HTTP status: $HTTP_STATUS"
+          jq . "$BODY" 2>/dev/null || cat "$BODY"
+
+          if [[ "$HTTP_STATUS" != "200" ]]; then
+            docker logs turin_test --tail 100
+            exit 1
+          fi
 
           # Extract the cookie without relying on head.
           SESSION_COOKIE=$(sed -nE \
