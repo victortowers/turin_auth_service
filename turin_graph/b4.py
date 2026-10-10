@@ -230,6 +230,8 @@ async def require_auth(session_cookie: str | None = Cookie(default=None, alias="
 @app.post(
     "/routing",
     responses={400: {"description": "Malformed request body"},
+    401: {"description": "Authentication is required"},
+    403: {"description": "Authentication is invalid"},
     404: {"description": "Invalid Start or End Nodes (not found in Database)."}},
 )
 def location_search(payload: RoutingRequest, response: Response, user: dict = Depends(require_auth)):
@@ -276,7 +278,10 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
 async def homepage():
     return {"message": "Hello! This is an authenticated endpoint. Any request(s) will fail without appropriate authentication."}
 
-@app.post("/sessionLogin")
+@app.post("/sessionLogin",
+    responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}},
+)
+
 def session_login(payload: LoginRequest, response: Response):
     id_token = payload.id_token
 
