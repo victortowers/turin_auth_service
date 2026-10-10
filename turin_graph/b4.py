@@ -216,9 +216,6 @@ end = 245374595 # (Aeroporto de Guarulhos)
 #1379439636 #(Shopping Morumbi)
 #
 async def require_auth(session_cookie: str | None = Cookie(default=None, alias="__Secure-turin_session")) -> dict:
-    if not session_cookie:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
     try:
         return auth.verify_session_cookie(
             session_cookie,
@@ -301,7 +298,8 @@ def session_login(payload: LoginRequest, response: Response):
         response.set_cookie(key="__Secure-turin_session", domain=".turinflow.com.br", value=session_cookie, max_age=int(expired_in.total_seconds()), httponly=True, secure=True, samesite="lax")
         return {"status": "200 OK"}
 
-    except auth.InvalidIdTokenError:
+    except auth.InvalidIdTokenError as e:
+        print(e)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token")
 
     except exceptions.FirebaseError:
