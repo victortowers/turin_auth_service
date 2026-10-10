@@ -28,7 +28,8 @@ projectk = os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "turinflow-app")
 print(f"Started with {projectk}")
 
 if not firebase_admin._apps:
-    firebase_admin.initialize_app(cred)
+    firebase_admin.initialize_app(cred, {"projectId": projectk},
+    )
 
 app = FastAPI()
 
