@@ -85,8 +85,8 @@ jobs:
         shell: bash
         env:
           FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
-          FIREBASE_TEST_EMAIL: ${{ secrets.FIREBASE_TEST_EMAIL }}
-          FIREBASE_TEST_PASSWORD: ${{ secrets.FIREBASE_TEST_PASSWORD }}
+          FIREBASE_TEST_EMAIL: demodemo@example.com
+          FIREBASE_TEST_PASSWORD: demodemo
         run: |
           set -euo pipefail
 
