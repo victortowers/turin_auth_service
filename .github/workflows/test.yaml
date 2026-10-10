@@ -96,7 +96,7 @@ jobs:
 
           LOGIN_RESPONSE=$(curl --fail-with-body -sS \
             -X POST \
-            "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}" \
+             "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n \
               --arg email "$FIREBASE_TEST_EMAIL" \
@@ -104,10 +104,8 @@ jobs:
               '{email:$email,password:$password,returnSecureToken:true}')")
 
           ID_TOKEN=$(jq -er '.idToken' <<< "$LOGIN_RESPONSE")
-
           echo "::add-mask::$ID_TOKEN"
 
-          # Exchange Firebase ID token for the server's session cookie.
           HEADERS=$(mktemp)
           BODY=$(mktemp)
           trap 'rm -f "$HEADERS" "$BODY"' EXIT
@@ -115,24 +113,23 @@ jobs:
           curl --fail-with-body -sS \
             -D "$HEADERS" \
             -o "$BODY" \
-            -X POST http://localhost:8080/sessionLogin \
+            -X POST \
+            "http://localhost:8080/sessionLogin" \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')"
 
-          SESSION_COOKIE=$(grep -i '^set-cookie: __Secure-turin_session=' "$HEADERS" \
-            | head -n 1 \
-            | sed -E 's/^[^:]+:[[:space:]]*([^;]+).*/\1/' \
-            | tr -d '\r' || true)
+          # Extract the cookie without relying on head.
+          SESSION_COOKIE=$(sed -nE \
+            's/^[Ss]et-[Cc]ookie:[[:space:]]*__Secure-turin_session=([^;]*).*/\1/ip' \
+            "$HEADERS" | tr -d '\r' | sed -n '1p')
 
           if [[ -z "$SESSION_COOKIE" ]]; then
-            echo "ERROR: Session cookie was not returned."
+            echo "::error::Session cookie missing from response."
             cat "$BODY"
             exit 1
           fi
 
           echo "::add-mask::$SESSION_COOKIE"
-
-          # Make the cookie available to subsequent workflow steps.
           echo "SESSION_COOKIE=$SESSION_COOKIE" >> "$GITHUB_ENV"
 
           echo "Firebase session exchange succeeded."
