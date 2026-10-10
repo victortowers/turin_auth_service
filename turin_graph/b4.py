@@ -25,7 +25,6 @@ service_account_info = json.loads(service_account_str)
 cred = credentials.Certificate(service_account_info)
 
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", "turinflow-app")
-cookie_domain = os.getenv("COOKIE_DOMAIN", "None")
 
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
@@ -298,7 +297,7 @@ def session_login(payload: LoginRequest, response: Response):
         expired_in = datetime.timedelta(days=7)
         session_cookie = auth.create_session_cookie(id_token, expires_in=expired_in)
 
-        response.set_cookie(key="__Secure-turin_session", domain=cookie_domain, value=session_cookie, max_age=int(expired_in.total_seconds()), httponly=True, secure=True, samesite="lax")
+        response.set_cookie(key="__Secure-turin_session", domain=".turinflow.com.br", value=session_cookie, max_age=int(expired_in.total_seconds()), httponly=True, secure=True, samesite="lax")
         return {"status": "200 OK"}
 
     except auth.InvalidIdTokenError:
