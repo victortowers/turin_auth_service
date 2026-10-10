@@ -117,6 +117,7 @@ jobs:
           test_route 7805862127 12480848899 0.080
           test_route 2922839021 2996077312 0.350
           test_route 2908684794 1813227883 0.225
+          test_route
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
