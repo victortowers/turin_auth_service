@@ -306,7 +306,11 @@ def session_login(payload: LoginRequest, response: Response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token")
 
     except exceptions.FirebaseError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unable to create session cookie")
+        print("Firebase session-cookie creation failed")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unable to create session cookie",
+        ) from None
 
 @app.post("/sessionLogout")
 def session_logout(response: Response, turin_session: str | None = Cookie(default=None)):
