@@ -3,6 +3,9 @@ services:
     image: turin-container:latest
     container_name: turin_test
     restart: unless-stopped
+    environment:
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY}
+      SERVICE_CREDENTIALS: ${SERVICE_CREDENTIALS}
 
     ports:
       - "8080:8080"
