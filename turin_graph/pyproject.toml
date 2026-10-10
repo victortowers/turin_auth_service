@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { email = "202715235+victortowers@users.noreply.github.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "fastapi>=0.141.1",
     "pydantic>=2.13.5",
