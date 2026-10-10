@@ -50,6 +50,9 @@ jobs:
 
       - name: Start services
         working-directory: ./turin_graph
+        env:
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          SERVICE_CREDENTIALS: ${{ secrets.SERVICE_CREDENTIALS }}
         run: docker compose up -d
 
       - name: Debug container
