@@ -1,10 +1,10 @@
-name: Build and Publish Docker container
+name: Test Docker Container for errors
 
 on:
   push:
     branches:
-      - main
-      - master
+      - dev
+      - staging
 
   workflow_dispatch:
 
@@ -117,7 +117,6 @@ jobs:
           test_route 7805862127 12480848899 0.080
           test_route 2922839021 2996077312 0.350
           test_route 2908684794 1813227883 0.225
-          test_route
 
       - name: Upload test results
         uses: actions/upload-artifact@v7
@@ -130,30 +129,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose down
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push Image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./turin_graph
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Trigger Cloud Build
-        if: success()
-        env:
-          CLOUD_BUILD_WEBHOOK: ${{ secrets.CLOUDBUILD_URL }}
-        run: |
-            curl --fail-with-body \
-            -X POST \
-            -H "Content-Type: application/json" \
-            "$CLOUD_BUILD_WEBHOOK" \
-            -d '{}'
