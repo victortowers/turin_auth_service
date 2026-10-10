@@ -85,6 +85,7 @@ jobs:
         shell: bash
         env:
           FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          SERVICE_CREDENTIALS: ${{ secrets.SERVICE_CREDENTIALS }}
           FIREBASE_TEST_EMAIL: demodemo@example.com
           FIREBASE_TEST_PASSWORD: demodemo
           GOOGLE_CLOUD_PROJECT: identity-demo
