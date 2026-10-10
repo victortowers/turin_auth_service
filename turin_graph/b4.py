@@ -55,7 +55,7 @@ class RouteResponse(BaseModel):
 
 class LoginRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    id_token: str = Field(..., alias="idToken")
+    id_token: str = Field(alias="idToken", min_length=1)
 
 def find_position(node_idx):
     position = int(np.searchsorted(node_ids, node_idx))
@@ -279,11 +279,14 @@ async def homepage():
     return {"message": "Hello! This is an authenticated endpoint. Any request(s) will fail without appropriate authentication."}
 
 @app.post("/sessionLogin",
-    responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}, 500: {"description": "Unable to process due to server error"}},
+    responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}},
 )
 
 def session_login(payload: LoginRequest, response: Response):
     id_token = payload.id_token
+
+    if not id_token:
+        raise HTTPException(status_code=400, detail="Invalid or empty Token")
 
     try:
         decoded_claims = auth.verify_id_token(id_token, check_revoked=True)
