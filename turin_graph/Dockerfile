@@ -9,4 +9,4 @@ RUN uv sync
 
 COPY . .
 
-CMD ["uv", "run", "uvicorn", "b3:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uv", "run", "uvicorn", "b4:app", "--host", "0.0.0.0", "--port", "8080"]
