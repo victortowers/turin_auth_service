@@ -6,6 +6,7 @@ services:
     environment:
       FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:?FIREBASE_WEB_API_KEY is required}
       SERVICE_CREDENTIALS: ${SERVICE_CREDENTIALS:?SERVICE_CREDENTIALS is required}
+      GOOGLE_CLOUD_PROJECT: identity-demo
 
     ports:
       - "8080:8080"
