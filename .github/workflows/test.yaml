@@ -92,7 +92,7 @@ jobs:
           FIREBASE_TEST_PASSWORD: demodemo
           GOOGLE_CLOUD_PROJECT: identity-demo
         run: |
-          set -euo pipefail
+          set -euox pipefail
 
           LOGIN_RESPONSE=$(curl --fail-with-body -sS \
             -X POST \
