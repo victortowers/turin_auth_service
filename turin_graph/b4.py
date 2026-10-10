@@ -216,6 +216,8 @@ end = 245374595 # (Aeroporto de Guarulhos)
 #1379439636 #(Shopping Morumbi)
 #
 async def require_auth(session_cookie: str | None = Cookie(default=None, alias="__Secure-turin_session")) -> dict:
+    if not session_cookie:
+        raise HTTPException(status_code=401, detail="Invalid session") from None
     try:
         return auth.verify_session_cookie(
             session_cookie,
