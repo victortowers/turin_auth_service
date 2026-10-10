@@ -148,11 +148,11 @@ jobs:
           set -euo pipefail
 
           STATUS=$(curl -sS
-            -o /tmp/auth-test-response.json
-            -w '%{http_code}'
-            -X POST http://localhost:8080/routing
-            -H "Content-Type: application/json"
-            -H "Cookie: __Secure-turin_session=$SESSION_COOKIE"
+            -o /tmp/auth-test-response.json \
+            -w '%{http_code}' \
+            -X POST http://localhost:8080/routing \
+            -H "Content-Type: application/json" \
+            -H "Cookie: __Secure-turin_session=$SESSION_COOKIE" \
             -d '{"node_start":1001568698,"node_end":1871768924}')
 
           if [[ "$STATUS" != "200" ]]; then
