@@ -279,7 +279,7 @@ async def homepage():
     return {"message": "Hello! This is an authenticated endpoint. Any request(s) will fail without appropriate authentication."}
 
 @app.post("/sessionLogin",
-    responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}},
+    responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}, 500: {"description": "Unable to process due to server error"}},
 )
 
 def session_login(payload: LoginRequest, response: Response):
