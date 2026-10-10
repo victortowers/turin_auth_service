@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: |
           timeout 60 bash -c \
-            'until curl -fsS http://localhost:8000/openapi.json > /dev/null; do sleep 1; done'
+            'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
       - name: Authenticate Firebase CI user
         shell: bash
@@ -111,7 +111,7 @@ jobs:
           curl --fail-with-body -sS \
             -D "$HEADERS" \
             -o "$BODY" \
-            -X POST http://localhost:8000/sessionLogin \
+            -X POST http://localhost:8080/sessionLogin \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')"
 
@@ -141,7 +141,7 @@ jobs:
           STATUS=$(curl -sS \
             -o /tmp/auth-test-response.json \
             -w '%{http_code}' \
-            -X POST http://localhost:8000/routing \
+            -X POST http://localhost:8080/routing \
             -H "Content-Type: application/json" \
             -H "Cookie: ${SESSION_COOKIE}" \
             -d '{"node_start":1001568698,"node_end":1871768924}')
