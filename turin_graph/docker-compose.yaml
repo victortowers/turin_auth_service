@@ -4,8 +4,8 @@ services:
     container_name: turin_test
     restart: unless-stopped
     environment:
-      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY}
-      SERVICE_CREDENTIALS: ${SERVICE_CREDENTIALS}
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:?FIREBASE_WEB_API_KEY is required}
+      SERVICE_CREDENTIALS: ${SERVICE_CREDENTIALS:?SERVICE_CREDENTIALS is required}
 
     ports:
       - "8080:8080"
