@@ -316,7 +316,6 @@ def session_login(payload: LoginRequest, response: Response):
         return {"status": "200 OK"}
 
     except auth.InvalidIdTokenError as e:
-        print(e)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token")
 
     except exceptions.FirebaseError:
