@@ -210,7 +210,6 @@ jobs:
           test_route 2922839021 2996077312 0.350
           test_route 2908684794 1813227883 0.225
 
-
       - name: Upload test results
         uses: actions/upload-artifact@v7
         if: always()
