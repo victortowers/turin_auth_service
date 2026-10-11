@@ -187,7 +187,7 @@ jobs:
               -X POST \
               http://localhost:8080/routing \
               -H "Content-Type: application/json" \
-              -H "Cookie: ${SESSION_COOKIE}" \
+              -H "Cookie: __Secure-turin_session=$SESSION_COOKIE" \
               -d "{\"node_start\": $start, \"node_end\": $end}"
 
             jq '{
