@@ -36,7 +36,7 @@ jobs:
           enable-cache: true
 
       - name: Install Dependencies
-        run: uv sync
+        run: uv sync --locked
 
       - name: Download Application Data
         working-directory: ./turin_graph
