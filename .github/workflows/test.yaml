@@ -156,7 +156,7 @@ jobs:
 
           uvx schemathesis run \
             http://localhost:8080/openapi.json \
-            --header "Cookie: ${SESSION_COOKIE}" \
+            --header "Cookie: __Secure-turin_session=${SESSION_COOKIE}" \
             --report json \
             --mode all \
             --max-examples 500

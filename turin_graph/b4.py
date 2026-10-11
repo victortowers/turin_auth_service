@@ -233,7 +233,6 @@ async def require_auth(
     try:
         return auth.verify_session_cookie(
             session_cookie,
-            check_revoked=True,
         )
     except Exception:
         print("Firebase session-cookie verification failed")
