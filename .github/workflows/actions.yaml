@@ -11,6 +11,9 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+  SERVICE_CREDENTIALS: ${{ secrets.SERVICE_CREDENTIALS }}
+  GOOGLE_CLOUD_PROJECT: identity-demo-511220
 
 jobs:
   build:
