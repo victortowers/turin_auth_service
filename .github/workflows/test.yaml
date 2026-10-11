@@ -67,12 +67,6 @@ jobs:
           timeout 10 bash -c \
             'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
-      - name: Wait for API
-        shell: bash
-        run: |
-          timeout 60 bash -c \
-            'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
-
       - name: Authenticate Firebase CI user
         shell: bash
         env:
@@ -161,7 +155,7 @@ jobs:
           set -euo pipefail
 
           uvx schemathesis run \
-            http://localhost:8000/openapi.json \
+            http://localhost:8080/openapi.json \
             --header "Cookie: ${SESSION_COOKIE}" \
             --report json \
             --mode all \
@@ -191,7 +185,7 @@ jobs:
               -o "$response" \
               -w "HTTP status: %{http_code}\nRequest time: %{time_total}s\n" \
               -X POST \
-              http://localhost:8000/routing \
+              http://localhost:8080/routing \
               -H "Content-Type: application/json" \
               -H "Cookie: ${SESSION_COOKIE}" \
               -d "{\"node_start\": $start, \"node_end\": $end}"
