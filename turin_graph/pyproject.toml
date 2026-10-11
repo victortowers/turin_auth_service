@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { email = "202715235+victortowers@users.noreply.github.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "fastapi>=0.141.1",
     "pydantic>=2.13.5",
@@ -17,6 +17,8 @@ dependencies = [
     "pathlib>=1.0.1",
     "pytest>=9.1.1",
     "schemathesis>=4.28.0",
+    "firebase-admin>=7.7.0",
+    "datetime>=6.0",
 ]
 
 [tool.vercel]

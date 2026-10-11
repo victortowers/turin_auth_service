@@ -3,6 +3,10 @@ services:
     image: turin-container:latest
     container_name: turin_test
     restart: unless-stopped
+    environment:
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:?FIREBASE_WEB_API_KEY is required}
+      SERVICE_CREDENTIALS: ${SERVICE_CREDENTIALS:?SERVICE_CREDENTIALS is required}
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:?GOOGLE_CLOUD_PROJECT is required}
 
     ports:
       - "8080:8080"
