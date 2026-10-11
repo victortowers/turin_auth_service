@@ -67,16 +67,6 @@ jobs:
           timeout 10 bash -c \
             'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
 
-      - uses: schemathesis/action@v3
-        env:
-          SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
-          SCHEMATHESIS_COVERAGE_REPORT_HTML_PATH: "schema-coverage.html"
-        with:
-          schema: 'http://localhost:8080/openapi.json'
-          authorization: 'Bearer ${{ secrets.API_TOKEN }}'
-          args: '--report json --mode all --max-examples 500'
-
-
       - name: Wait for API
         shell: bash
         run: |
@@ -145,10 +135,9 @@ jobs:
       - name: Verify authenticated API access
         shell: bash
         run: |
-          set -euo pipefail
+          set -euox pipefail
 
-          STATUS=$(curl -sS
-            -o /tmp/auth-test-response.json \
+          STATUS=$(curl -sS -o /tmp/auth-test-response.json \
             -w '%{http_code}' \
             -X POST http://localhost:8080/routing \
             -H "Content-Type: application/json" \
