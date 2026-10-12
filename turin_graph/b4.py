@@ -326,15 +326,14 @@ def session_login(payload: LoginRequest, response: Response):
         ) from None
 
 @app.post("/sessionLogout")
-def session_logout(response: Response, turin_session: str | None = Cookie(default=None)):
-    response.delete_cookie(key="__Secure-turin_session", domain=".turinflow.com.br", httponly=True, secure=True, samesite="lax")
+def session_logout(response: Response,turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session")):
+    response.delete_cookie(key="__Secure-turin_session",domain=".turinflow.com.br",path="/",httponly=True,secure=True,samesite="lax",)
 
     if turin_session:
         try:
-            decoded_claims = auth.verify_session_cookie(turin_session)
-            auth.revoke_refresh_tokens(decoded_claims.get("sub", "None"))
-
-        except (auth.InvalidSessionCookieError, exceptions.FirebaseError):
+            claims = auth.verify_session_cookie(turin_session)
+            auth.revoke_refresh_tokens(claims["uid"])
+        except (auth.InvalidSessionCookieError, auth.ExpiredSessionCookieError, auth.RevokedSessionCookieError):
             pass
 
         return {"status": "200 OK", "message": "Logged out"}
@@ -346,3 +345,24 @@ try:
 
 except Exception:
     print("****** May not start correctly, components may not be loaded properly.****************")
+
+@app.get("/me")
+def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
+    if not turin_session:
+        raise HTTPException(status_code=401,detail="Not authenticated")
+
+    try:
+        claims = auth.verify_session_cookie(turin_session)
+    except (
+        auth.InvalidSessionCookieError, auth.ExpiredSessionCookieError, auth.RevokedSessionCookieError,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired session",
+        ) from None
+
+    return {
+        "uid": claims["uid"],
+        "email": claims.get("email"),
+        "name": claims.get("name"),
+    }
