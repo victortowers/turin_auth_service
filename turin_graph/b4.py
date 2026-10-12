@@ -290,8 +290,26 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
         raise HTTPException(status_code=500,detail=f"Routing failed: {type(e).__name__}: {e}",)
 
 @app.get("/")
-async def homepage():
-    return {"message": "Hello! This is an authenticated endpoint. Any request(s) will fail without appropriate authentication."}
+def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
+    if not turin_session:
+        raise HTTPException(status_code=401,detail="Not authenticated")
+
+    try:
+        claims = auth.verify_session_cookie(turin_session)
+    except (
+        auth.InvalidSessionCookieError, auth.ExpiredSessionCookieError, auth.RevokedSessionCookieError,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired session",
+        ) from None
+
+    return {
+        "message": "Hello!",
+        "uid": claims["uid"],
+        "email": claims.get("email"),
+        "name": claims.get("name"),
+    }
 
 @app.post("/sessionLogin",
     responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}},
@@ -340,27 +358,6 @@ def session_logout(response: Response,turin_session: str | None = Cookie(default
             return {"status": 200, "message": "An error occured when logging out. Your session is protected."}
 
         return {"status": "200 OK", "message": "Logged out"}
-
-@app.get("/me")
-def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
-    if not turin_session:
-        raise HTTPException(status_code=401,detail="Not authenticated")
-
-    try:
-        claims = auth.verify_session_cookie(turin_session)
-    except (
-        auth.InvalidSessionCookieError, auth.ExpiredSessionCookieError, auth.RevokedSessionCookieError,
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired session",
-        ) from None
-
-    return {
-        "uid": claims["uid"],
-        "email": claims.get("email"),
-        "name": claims.get("name"),
-    }
 
 try:
     a4 = time.monotonic()
