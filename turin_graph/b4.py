@@ -338,14 +338,6 @@ def session_logout(response: Response,turin_session: str | None = Cookie(default
 
         return {"status": "200 OK", "message": "Logged out"}
 
-try:
-    a4 = time.monotonic()
-    total_distance, routed = a_star(start, end)
-    print(f"{time.monotonic() - a4:.5f} seconds")
-
-except Exception:
-    print("****** May not start correctly, components may not be loaded properly.****************")
-
 @app.get("/me")
 def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
     if not turin_session:
@@ -366,3 +358,11 @@ def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin
         "email": claims.get("email"),
         "name": claims.get("name"),
     }
+
+try:
+    a4 = time.monotonic()
+    total_distance, routed = a_star(start, end)
+    print(f"{time.monotonic() - a4:.5f} seconds")
+
+except Exception:
+    print("****** May not start correctly, components may not be loaded properly.****************")
