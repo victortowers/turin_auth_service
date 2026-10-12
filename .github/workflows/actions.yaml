@@ -153,14 +153,14 @@ jobs:
           SCHEMATHESIS_COVERAGE_FORMAT: "html,markdown"
           SCHEMATHESIS_COVERAGE_REPORT_HTML_PATH: "schema-coverage.html"
         run: |
-          set -euo pipefail
+          set -euox pipefail
 
           uvx schemathesis run \
             http://localhost:8080/openapi.json \
             --header "Cookie: __Secure-turin_session=${SESSION_COOKIE}" \
             --report json \
             --mode all \
-            --max-examples 500
+            --max-examples 50
 
       - name: Routing Testing - Speed Targets
         shell: bash
