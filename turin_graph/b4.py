@@ -327,14 +327,17 @@ def session_login(payload: LoginRequest, response: Response):
 
 @app.post("/sessionLogout")
 def session_logout(response: Response,turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session")):
-    response.delete_cookie(key="__Secure-turin_session",domain=".turinflow.com.br",path="/",httponly=True,secure=True,samesite="lax",)
+    response.delete_cookie(key="__Secure-turin_session",domain=".turinflow.com.br",path="/",httponly=True,secure=True,samesite="lax")
 
     if turin_session:
         try:
-            claims = auth.verify_session_cookie(turin_session)
-            auth.revoke_refresh_tokens(claims["uid"])
+            decoded_claims = auth.verify_session_cookie(turin_session)
+            auth.revoke_refresh_tokens(decoded_claims.get("sub", "None"))
         except (auth.InvalidSessionCookieError, auth.ExpiredSessionCookieError, auth.RevokedSessionCookieError):
             pass
+
+        except Exception:
+            return {"status": 200, "message": "An error occured when logging out. Your session is protected."}
 
         return {"status": "200 OK", "message": "Logged out"}
 
