@@ -75,3 +75,33 @@ def session_logout(response: Response, turin_session: str | None = Cookie(defaul
             pass
 
         return {"status": "200 OK", "message": "Logged out"}
+
+@app.get("/")
+async def homepage():
+    return {"status": 200, "message": "You can try your cookies (and its validity) at f.turinflow.com.br/me"}
+
+@app.get("/me")
+def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
+    if not turin_session:
+        raise HTTPException(status_code=401,detail="Not authenticated")
+
+    try:
+        claims = auth.verify_session_cookie(turin_session)
+    except (
+        auth.InvalidSessionCookieError, auth.ExpiredSessionCookieError, auth.RevokedSessionCookieError,
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired session",
+        ) from None
+
+    return {
+        "message": "Hello, " + claims.get("name", "User") + "!",
+        "uid": claims["uid"],
+        "email": claims.get("email", "None"),
+        "email_verified": claims.get("email_verified", "None"),
+        "login_method": claims.get("firebase", {}).get("sign_in_provider", None),
+        "name": claims.get("name", "User"),
+        "expiry": claims.get("exp", "-1"),
+        "picture": claims.get("picture")
+    }
