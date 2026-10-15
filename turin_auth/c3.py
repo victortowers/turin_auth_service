@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response, Cookie, status
+from fastapi import FastAPI, HTTPException, Response, Cookie, status, Depends
 from firebase_admin import auth, exceptions, credentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
@@ -75,6 +75,30 @@ def session_logout(response: Response, turin_session: str | None = Cookie(defaul
             pass
 
         return {"status": "200 OK", "message": "Logged out"}
+
+async def require_auth(
+    session_cookie: str | None = Cookie(
+        default=None,
+        alias="__Secure-turin_session",
+    ),
+) -> dict:
+    if not session_cookie:
+        print("Auth failed: session cookie was not received")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid session",
+        ) from None
+
+    try:
+        return auth.verify_session_cookie(
+            session_cookie,
+        )
+    except Exception:
+        print("Firebase session-cookie verification failed")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid session",
+        ) from None
 
 @app.get("/")
 async def homepage():
