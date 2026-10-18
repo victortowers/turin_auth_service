@@ -67,6 +67,7 @@ jobs:
             nwr/shop \
             nwr/tourism \
             nwr/leisure \
+            w/highway=motorway,trunk,primary,secondary,tertiary,unclassified,residential,living_street,service,motorway_link,trunk_link,primary_link,secondary_link,tertiary_link \
             -o sudeste3.osm.pbf
 
           osmium fileinfo --extended sudeste3.osm.pbf
@@ -78,7 +79,7 @@ jobs:
             --output=pgsql \
             --latlong \
             --number-processes 2 \
-            --cache 2000 \
+            --cache 512 \
             --database "$NEON_DATABASE_URL" \
             ./sudeste3.osm.pbf
 
