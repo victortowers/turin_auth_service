@@ -24,7 +24,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y osm2pgsql postgresql-client
-          curl -fsSL https://awscli.amazonaws.com/v2/install.sh | bash
 
       - name: Check configuration
         shell: bash
@@ -42,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          aws s3 cp s3://turin-graph1/sudeste-extract.osm.pbf ./sudeste2.osm.pbf --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
+          curl -L --fail --retry 5 -o ./sudeste2.osm.pbf https://r2.turinflow.com.br/sudeste-extract.osm.pbf
 
           test -s ./sudeste2.osm.pbf
           ls -lh ./sudeste2.osm.pbf
