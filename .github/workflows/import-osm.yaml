@@ -23,7 +23,8 @@ jobs:
       - name: Install osm2pgsql and AWS CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y osm2pgsql awscli postgresql-client
+          sudo apt-get install -y osm2pgsql postgresql-client
+          curl -fsSL https://awscli.amazonaws.com/v2/install.sh | bash
 
       - name: Check configuration
         shell: bash
