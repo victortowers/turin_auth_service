@@ -57,7 +57,7 @@ jobs:
           set -euox pipefail
           osmium fileinfo --extended sudeste2.osm.pbf
 
-          osmium tags-filter sudeste3.osm.pbf \
+          osmium tags-filter sudeste2.osm.pbf \
             --verbose \
             nwr/place \
             nwr/boundary=administrative \
