@@ -67,7 +67,7 @@ jobs:
             nwr/shop \
             nwr/tourism \
             nwr/leisure \
-            -o /workspace/turin_build/sudeste3.osm.pbf
+            -o sudeste3.osm.pbf
 
           osmium fileinfo --extended sudeste3.osm.pbf
 
