@@ -57,16 +57,17 @@ jobs:
           set -euox pipefail
           osmium fileinfo --extended sudeste2.osm.pbf
 
-          osmium tags-filter sudeste2.osm.pbf \
-          -o sudeste3.osm.pbf \
-          -e 'nwr/place' \
-          -e 'nwr/boundary=administrative' \
-          -e 'nwr/addr:*' \
-          -e 'nwr/amenity' \
-          -e 'nwr/office' \
-          -e 'nwr/shop' \
-          -e 'nwr/tourism' \
-          -e 'nwr/leisure'
+          osmium tags-filter sudeste3.osm.pbf \
+            --verbose \
+            nwr/place \
+            nwr/boundary=administrative \
+            nwr/addr:* \
+            nwr/amenity \
+            nwr/office \
+            nwr/shop \
+            nwr/tourism \
+            nwr/leisure \
+            -o /workspace/turin_build/sudeste3.osm.pbf
 
           osmium fileinfo --extended sudeste3.osm.pbf
 
