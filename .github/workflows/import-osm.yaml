@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           set -euox pipefail
-          osm2pgsql --output null --cache 0 sudeste2.osm.pbf
+          osm2pgsql --slim --output null --cache 0 sudeste2.osm.pbf
 
           osmium tags-filter sudeste2.osm.pbf \
           -o sudeste3.osm.pbf \
