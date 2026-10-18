@@ -41,7 +41,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl -L --fail --retry 5 -o ./sudeste2.osm.pbf https://r2.turinflow.com.br/sudeste-extract.osm.pbf
+          curl -fL --retry 5 \
+            -o ./sudeste2.osm.pbf \
+            'https://r2.turinflow.com.br/sudeste-extract.osm.pbf'
 
           test -s ./sudeste2.osm.pbf
           ls -lh ./sudeste2.osm.pbf
