@@ -1,0 +1,81 @@
+
+name: Import OSM into Neon
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    env:
+      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+
+    steps:
+      - name: Install osm2pgsql and AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osm2pgsql awscli postgresql-client
+
+      - name: Check configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$NEON_DATABASE_URL"
+
+          osm2pgsql --version
+          psql "$NEON_DATABASE_URL" \
+            -v ON_ERROR_STOP=1 \
+            -c "SELECT PostGIS_Full_Version();"
+
+      - name: Download OSM extract
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          aws s3 cp s3://turin-graph1/sudeste-extract.osm.pbf ./sudeste2.osm.pbf --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
+
+          test -s ./sudeste2.osm.pbf
+          ls -lh ./sudeste2.osm.pbf
+
+      - name: Import into Neon
+        shell: bash
+        run: |
+          set -euox pipefail
+
+          osm2pgsql \
+            --create \
+            --slim \
+            --drop \
+            --output=pgsql \
+            --latlong \
+            --number-processes 2 \
+            --cache 2000 \
+            --database "$NEON_DATABASE_URL" \
+            ./sudeste2.osm.pbf
+
+      - name: Verify import
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          psql "$NEON_DATABASE_URL" \
+            -v ON_ERROR_STOP=1 \
+            -c "SELECT COUNT(*) AS road_count
+                FROM planet_osm_line
+                WHERE highway IS NOT NULL;"
+
+          psql "$NEON_DATABASE_URL" \
+            -v ON_ERROR_STOP=1 \
+            -c "SELECT name, highway
+                FROM planet_osm_line
+                WHERE highway IS NOT NULL
+                LIMIT 10;"
