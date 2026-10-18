@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           set -euox pipefail
-          osm2pgsql --slim --output null --cache 0 --database "$NEON_DATABASE_URL" sudeste2.osm.pbf
+          osmium fileinfo --extended sudeste2.osm.pbf
 
           osmium tags-filter sudeste2.osm.pbf \
           -o sudeste3.osm.pbf \
@@ -67,6 +67,8 @@ jobs:
           -e 'nwr/shop' \
           -e 'nwr/tourism' \
           -e 'nwr/leisure'
+
+          osmium fileinfo --extended sudeste3.osm.pbf
 
           osm2pgsql \
             --create \
