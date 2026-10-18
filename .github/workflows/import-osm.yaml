@@ -46,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          aws s3 cp s3://turin-graph1/sudeste-extract.osm.pbf ./sudeste2.osm.pbf --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
+          aws s3 cp s3://turin-graph1/sudeste2.osm.pbf ./sudeste2.osm.pbf --endpoint-url "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
 
           test -s ./sudeste2.osm.pbf
           ls -lh ./sudeste2.osm.pbf
