@@ -23,7 +23,7 @@ jobs:
       - name: Install osm2pgsql and AWS CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y osm2pgsql postgresql-client
+          sudo apt-get install -y osm2pgsql postgresql-client osmium-tool
           curl -fsSL https://awscli.amazonaws.com/v2/install.sh | bash
 
       - name: Check configuration
@@ -55,6 +55,18 @@ jobs:
         shell: bash
         run: |
           set -euox pipefail
+          osm2pgsql --output null --cache 0 sudeste2.osm.pbf
+
+          osmium tags-filter sudeste2.osm.pbf \
+          -o sudeste3.osm.pbf \
+          -e 'nwr/place' \
+          -e 'nwr/boundary=administrative' \
+          -e 'nwr/addr:*' \
+          -e 'nwr/amenity' \
+          -e 'nwr/office' \
+          -e 'nwr/shop' \
+          -e 'nwr/tourism' \
+          -e 'nwr/leisure'
 
           osm2pgsql \
             --create \
@@ -65,7 +77,7 @@ jobs:
             --number-processes 2 \
             --cache 2000 \
             --database "$NEON_DATABASE_URL" \
-            ./sudeste2.osm.pbf
+            ./sudeste3.osm.pbf
 
       - name: Verify import
         shell: bash
