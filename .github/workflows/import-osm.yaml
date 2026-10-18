@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 360
 
     env:
-      NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      NEON_DATABASE_URL: ${{ secrets.NEON_DB }}
 
     steps:
       - name: Install osm2pgsql and AWS CLI
