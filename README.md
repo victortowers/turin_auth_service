@@ -8,6 +8,6 @@ Future releases will continue from v0.10.3 to avoid reusing version numbers asso
 
 ### Turin Routing System
 
-The Turin routing system is the one utilized by turinflow.com.br. Utilize the “turin_build/osm14.py” with your PBF file to generate routing graphs. 
-To assimilate our routing APIs, utilze our prebuilt containers or build your own. the most recent API server is b4.py. 
+The Turin routing system is the one utilized by turinflow.com.br. Utilize the “turin_build/osm14.py” with your PBF file to generate routing graphs.   
+To assimilate our routing APIs, utilze our prebuilt containers or build your own. the most recent API server is b4.py.   
 _Note: to host routing APIs without the authentication, you must either: fork our application, or use any version predating v0.10.0 (except v0.9.9 and v0.9.10). _
