@@ -38,7 +38,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://turinflow.com.br",
-        "http://localhost:8090",
 
     ],
     allow_credentials=True,
