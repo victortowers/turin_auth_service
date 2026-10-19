@@ -8,4 +8,4 @@ Future releases will continue from v0.10.3 to avoid reusing version numbers asso
 
 ### Turin Routing System
 
-The Turin routing system is the one utilized by turinflow.com.br. Utilize the “turin_build/osm14.py” with your PBF file to generate routing graphs necessary. 
+The Turin routing system is the one utilized by turinflow.com.br. Utilize the “turin_build/osm14.py” with your PBF file to generate routing graphs. 
