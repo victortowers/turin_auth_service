@@ -75,7 +75,6 @@ jobs:
           osm2pgsql \
             --create \
             --slim \
-            --drop \
             --output=pgsql \
             --latlong \
             --number-processes 2 \
