@@ -12,4 +12,4 @@ The Turin routing system is the one utilized by turinflow.com.br. Utilize the â€
 
 To assimilate our routing APIs, utilze our prebuilt containers or build your own. the most recent API server is b4.py.   
 
-*Note: to host routing APIs without the authentication, you must either: fork our application, or use any version predating v0.10.0 (except v0.9.9 and v0.9.10).*
+*Note: To host routing APIs without the authentication, you must either: fork our application, or use any version predating v0.10.0 (except v0.9.9 and v0.9.10).*
