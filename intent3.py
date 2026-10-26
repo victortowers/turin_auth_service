@@ -141,64 +141,6 @@ def _clock(text, now, day, period):
         return None, "in_the_past"
     return base, None
 
-
-
-def parse(text, ctx=None, now=None):
-    now = dt.datetime.now()
-    print(now)
-    if isinstance(ctx, dict):
-        travel = int(ctx.get("travel_seconds") or TRAVEL_DEF)
-    else:
-        travel = int(ctx or TRAVEL_DEF)
-
-    t, err = _clock(text, now)
-    if err:
-        return {"kind": "clarification", "reason": err, "question": "Que horas?"}
-
-    arrive = bool(D.search(text))
-    depart = bool(E.search(text))
-    if F.search(text):          # "vou chegar" — vou is only helper
-        depart = False
-
-    p = PLACE.search(text)
-    dest = p.group(1).strip() if p else None
-
-    if arrive and depart:
-        return {"kind": "clarification", "reason": "over_determined",
-                "question": "Saída ou chegada?"}
-    if not dest:
-        return {"kind": "clarification", "reason": "missing_destination",
-                "question": "Para onde?"}
-
-    assumed = None
-    if t is None:
-        intent, deadline, departure = "GO_NOW", None, None
-    elif arrive:
-        intent, deadline, departure = "ARRIVE_BY", t, None
-    elif depart:
-        intent, deadline, departure = "LEAVE_AT", None, t
-    else:
-        intent, deadline, departure = "LEAVE_AT", None, t
-        assumed = "departure"          # no verb → logged, not hidden
-
-    leave = deadline - timedelta(seconds=travel + BUFFER * travel) if deadline else None
-    arrival_est = departure + timedelta(seconds=travel) if departure else None
-
-    return {
-        "kind": "intent",
-        "intent_class": intent,
-        "deadline":            deadline.strftime(FMT)    if deadline    else None,
-        "departure":           departure.strftime(FMT)   if departure   else None,
-        "destination":         dest,
-        "origin":              None,
-        "suggested_departure": leave.strftime(FMT)       if leave       else None,
-        "estimated_arrival":   arrival_est.strftime(FMT) if arrival_est else None,
-        "feasible":            (leave >= now) if leave else True,
-        "travel_seconds":      travel,
-        "assumed":             assumed,
-    }
-
-
 def parse2(text, time):
     now = dt.datetime.now()
     print(now)
