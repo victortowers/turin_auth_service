@@ -2,10 +2,6 @@
 name: Import OSM into Neon
 
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 permissions:
@@ -78,7 +74,7 @@ jobs:
             --output=pgsql \
             --latlong \
             --number-processes 2 \
-            --cache 512 \
+            --cache 2048 \
             --database "$NEON_DATABASE_URL" \
             ./sudeste3.osm.pbf
 

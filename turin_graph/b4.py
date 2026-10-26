@@ -134,7 +134,7 @@ def a_star(start1, end1):
 
     visited = set()
     nodes_explored = 0
-    deadlined = time.monotonic() + 2.21
+    deadlined = time.monotonic() + 4.21
 
     while pq and time.monotonic() < deadlined:
         estimated, time_travelled, current_row, row_path = heapq.heappop(pq)
@@ -265,7 +265,7 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
                 "estimated_time_hours": None,
                 "routed": None,
                 "time_spent": f"{time2:.3f} ms",
-                "detail": "Out of time. The limit for processing is 2210ms.",
+                "detail": "Out of time. The limit for processing is 4210ms.",
             }
 
         route_coordinates = [
