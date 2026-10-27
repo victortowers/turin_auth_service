@@ -1,4 +1,7 @@
 import re
+import sys
+from pathlib import Path
+import json
 from datetime import timedelta
 import datetime as dt
 import unicodedata
@@ -141,7 +144,22 @@ def _clock(text, now, day, period):
         return None, "in_the_past"
     return base, None
 
-def parse2(text, time):
+def time_period(time):
+    hora = dt.time.fromisoformat(time)
+    if hora < dt.time(5):
+        return "madrugada"
+
+    elif hora < dt.time(12):
+        return "manhã"
+
+    elif hora < dt.time(18):
+        return "tarde"
+
+    elif hora >= dt.time(18):
+        return "noite"
+
+
+def parse2(text):
     now = dt.datetime.now()
     print(now)
 
@@ -157,18 +175,71 @@ def parse2(text, time):
     i1 = I.search(text)
     j1 = J.search(text)
 
-    b2 = clock(b1.group(0))
+    candidate = a1 or b1 or c1
+    a2 = clock(candidate.group(0)) if candidate else None
     print(a1, b1, c1, d1, e1,e2, f1, h1, i1, j1)
 
     return {
-        "time": b2 if b2 else c1.group(0) if c1 else None,
+        "time": a2,
         "time_limit": a1.group(0) if a1 else None,
-        "time_heuristic": j1.group(1) if j1 else None,
-        "time_heuristic_day": h1.group(1) if h1 else None,
+        "time_heuristic": j1.group(1) if j1 else time_period(a2),
+        "time_heuristic_day": h1.group(0) if h1 else None,
         "action": "chegar" if d1 else "sair" if e1 else None,
+        "action2": e2.group(0) if e2 else None,
         "destination": f1.group(1) if f1 else None,
+        "compute_time": dt.datetime.now() - now,
+        "weekday": i1.group("wd") if i1 else None,
     }
 
-prompt = "vou ao cinema às 18"
+prompt = "vou ao cinema às 18 horas"
 print(prompt)
-print(parse2(prompt, dt.time()))
+print(parse2(prompt))
+
+import time
+N = 20000
+t = time.perf_counter()
+for _ in range(N): print(parse2("vou chegar às 7 da noite no shopping"))
+print((time.perf_counter() - t) / N * 1e6, "µs/call")
+
+if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        # Default: test one prompt interactively.
+        prompt = input("Prompt: ")
+        print(parse2(prompt))
+
+    else:
+        path = Path(sys.argv[1])
+
+        if path.suffix.lower() == ".txt":
+            with path.open(encoding="utf-8-sig") as f:
+                prompts = [
+                    line.strip()
+                    for line in f
+                    if line.strip()
+                ]
+
+        elif path.suffix.lower() == ".csv":
+            with path.open(
+                encoding="utf-8-sig", newline=""
+            ) as f:
+                prompts = [
+                    row["prompt"].strip()
+                    for row in csv.DictReader(f)
+                    if row.get("prompt", "").strip()
+                ]
+
+        else:
+            raise ValueError("Use a .txt or .csv file")
+
+        for i, prompt in enumerate(prompts, 1):
+            print(f"\n--- Test {i}: {prompt}")
+            try:
+                result = parse2(prompt)
+                print(json.dumps(
+                    result,
+                    ensure_ascii=False,
+                    default=str,
+                    indent=2,
+                ))
+            except Exception as e:
+                print(f"ERROR: {type(e).__name__}: {e}")
