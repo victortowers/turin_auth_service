@@ -20,13 +20,13 @@ jobs:
           set -e
 
           # Configuration
-          BBOX="-46.9092627,-23.5237534,-46.7965316,-23.4322639"
-          MAXZOOM=15
-          FILENAME="alphaville.pmtiles"
+          BBOX="-74.0073396,-36.9635718,-32.211958,40.1918566"
+          MAXZOOM=21
+          FILENAME="sp.pmtiles"
 
           ENDPOINT="https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com/"
-          BUCKET="turin-graph1"
-          OBJECT_KEY="alphaville.pmtiles"
+          BUCKET="maps"
+          OBJECT_KEY="sp.pmtiles"
 
           SOURCE="https://build.protomaps.com/$(date -u +%Y%m%d).pmtiles"
 
