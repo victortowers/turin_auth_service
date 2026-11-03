@@ -1,66 +1,147 @@
+
+import csv
+import json
 import re
 import sys
-from pathlib import Path
-import json
-from datetime import timedelta
-import datetime as dt
+import time
 import unicodedata
 
-FMT        = "%Y-%m-%dT%H:%M"
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
 
-WEEKDAY = {"segunda": 0, "terca": 1, "quarta": 2, "quinta": 3,
-           "sexta": 4, "sabado": 5, "domingo": 6}
+FMT = "%Y-%m-%dT%H:%M"
 
-REL    = r"depois de amanh[ãa]|amanh[ãa]|hoje"
-WDS    = r"segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo"
-PERIOD = r"manh[ãa]|tarde|noite|madrugada"
-MARK   = r"[àa]s|at[ée]|pelas?|por volta"
+WEEKDAYS = {
+    "segunda": 0,
+    "terca": 1,
+    "quarta": 2,
+    "quinta": 3,
+    "sexta": 4,
+    "sabado": 5,
+    "domingo": 6,
+}
 
-UNIT = r"(?!\s*(?:min\w*|km|metros?|reais|pessoas|anos)\b)"
+RELATIVE_DAYS = {
+    ("hoje",): 0,
+    ("amanha",): 1,
+    ("depois", "de", "amanha"): 2,
+}
 
-A = re.compile(
-    r"\b(?:[àa]s|at[ée]|pelas?|por volta das?)\s+"
-    r"(?<!\d)(\d{1,2})(?:[:h](\d{2}))?" + UNIT + r"(?!\d)", re.I)
+P = {
+    ("de", "manha"): "manha",
+    ("da", "manha"): "manha",
+    ("a", "tarde"): "tarde",
+    ("de", "tarde"): "tarde",
+    ("da", "tarde"): "tarde",
+    ("a", "noite"): "noite",
+    ("de", "noite"): "noite",
+    ("da", "noite"): "noite",
+    ("de", "madrugada"): "madrugada",
+    ("da", "madrugada"): "madrugada",
+}
 
-B  = re.compile(r"(?<!\d)(\d{1,2})h(?:(\d{2}))?(?!\d)", re.I)
-C  = re.compile(r"(?<!\d)(\d{1,2}):(\d{2})(?!\d)")
-# bare colon, lowest confidence ("18:30")
+# These are exact token matches, not substring matches.
+A = {
+    "chegar", "chego", "chega", "cheguei", "chegou",
+    "chegando", "chegara", "chegarei", "chegarao",
+    "estarei", "estaremos", "estarao",
+    "estava", "estavam", "esteve", "estive",
+}
 
-# ── PHASE 2 · what does the clock mean? ────────────────────────────
-D = re.compile(
-    r"cheg\w*|"
-    r"\best(?:ar|ou|arei|aremo?s|á|ão|ive|iver|ivemo?s|ava|avam)\b", re.I)
-# ARRIVE verb: chegar / estarei / estaremos / estivemos / estavam
+D = {
+    "sair", "saio", "sai", "saia", "saindo",
+    "sairei", "saira", "sairao", "saida",
+    "partir", "parto", "partiu", "partindo",
+    "partirei", "partira", "partirao",
+}
 
-E = re.compile(r"\bsai\w*|\bpart\w*|\bsa[íi]da\b", re.I)
+I = {
+    "vou", "vai", "vamos", "irei", "ira", "irao", "iremos"
+}
 
-E2 = re.compile(r"\b(?:vou|vai|vamos|ir(?:ei|á|ão|emos)?)\b", re.I)
+P = {
+    "ao", "a", "para", "pra", "pro", "na", "no", "em"
+}
 
-H = re.compile(rf"\b(?:{REL})\b", re.I)
-I = re.compile(rf"\b(?P<wd>{WDS})(?:[- ]?feira)?\b", re.I)
-J = re.compile(rf"\b(?:d[ae]|à|a|pela)\s+({PERIOD})\b", re.I)
+TIME_MARKERS = {
+    ("as",),
+    ("ate",),
+    ("pelas",),
+    ("pela",),
+    ("por", "volta"),
+}
 
-# prepositions that can introduce a PLACE — no de/da/do
-PREP = r"ao|a|à|para|pra|pro|na|no|em"
-
-G = (rf"{MARK}|{REL}|{WDS}|{PERIOD}|"
-     r"cheg\w*|sai\w*|part\w*|sa[íi]da|ir(?:ei|á|ão|emos)?|vou|vai|vamos")
-
-PLACE = re.compile(
-    rf"\b(?:{PREP})\s+"
-    rf"(?!(?:{REL}|{WDS}|{PERIOD})\b)"          # day/period word ≠ destination
-    r"(.{2,40}?)(?=\s+(?:" + G + r")\b|\s*$)",  # stops at a G terminator or EOS
-    re.I)
-
-WEEKDAY = {"segunda": 0, "terca": 1, "quarta": 2, "quinta": 3, "sexta": 4, "sabado": 5, "domingo": 6}
-DEFAULT_HOUR = {"manha": 9, "tarde": 14, "noite": 20, "madrugada": 1}
-BAD_PLACE    = {"noite", "tarde", "manha", "madrugada", "amanha", "hoje",
-                "depois de amanha", "agora"}
+TOKEN_RE = re.compile(
+    r"\d{1,2}(?:[:h]\d{2})?"
+    r"|[^\W\d_]+"
+    r"|\d+"
+    r"|[^\w\s]",
+    re.UNICODE | re.IGNORECASE,
+)
 
 BUFFER = 0.1
 
-def flat(s):
-    return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn").lower()
+def normalize_word(text):
+    text = unicodedata.normalize("NFD", text.casefold())
+    return "".join(char for char in text
+        if unicodedata.category(char) != "Mn"
+    )
+
+
+@dataclass
+class Token:
+    value: str
+    raw: str
+    start: int
+    end: int
+
+
+def tokenize(text):
+    result = []
+
+    for match in TOKEN_RE.finditer(text):
+        raw = match.group(0)
+
+        result.append(
+            Token(
+                value=normalize_word(raw),
+                raw=raw,
+                start=match.start(),
+                end=match.end(),
+            )
+        )
+
+    return result
+
+def words(tokens):
+    return [token.value for token in tokens]
+
+def find_phrases(tokens, phrases):
+    found = []
+    i = 0
+
+    while i < len(tokens):
+        match = None
+
+        for phrase, value in sorted(
+            phrases.items(),
+            key=lambda item: len(item[0]),
+            reverse=True,
+        ):
+            end = i + 1
+
+            if tuple(tokens[i:end]) == phrase:
+                match = (i, end, value)
+                break
+
+        if match:
+            found.append(match)
+            i = match[1]
+        else:
+            i += 1
+
+    return found
 
 def day(text, now):
     m = H.search(text)
@@ -80,6 +161,12 @@ NUM_PERIOD = re.compile(
 
 LADDER = (A, NUM_PERIOD, B, C)         # confidence order
 
+
+def error_handler(err1):
+    return {
+        "error": "error",
+        "message": err1,
+    }
 
 def decode(h, mi):
     h, mi = int(h), int(mi or 0)
@@ -121,42 +208,24 @@ def fix_hour(h, p):
             return (h, None) if h <= 12 else (None, "contradictory_period")
         return (h, None) if h <= 5 else (None, "contradictory_period")
 
-def _clock(text, now, day, period):
-    m = None
-    for rx in (A, B, C):
-        m = rx.search(text)
-        if m: break
-    if m is None:
-        return None, None                      # no clock at all
-
-    h, mi = int(m.group(1)), int(m.group(2) or 0)
-    if h > 23 or mi > 59:
-        return None, "invalid_time"
-
-    h, err = _fix_hour(h, period)
-    if err:
-        return None, err
-
-    base = (now + timedelta(days=day)).replace(
-        hour=h, minute=mi, second=0, microsecond=0)
-
-    if day == 0 and base < now:                # explicit "hoje" that already passed
-        return None, "in_the_past"
-    return base, None
-
 def time_period(time):
-    hora = dt.time.fromisoformat(time)
-    if hora < dt.time(5):
-        return "madrugada"
+    try:
+        hora = dt.time.fromisoformat(time)
+        if hora < dt.time(5):
+            return "madrugada"
 
-    elif hora < dt.time(12):
-        return "manhã"
+        elif hora < dt.time(12):
+            return "manhã"
 
-    elif hora < dt.time(18):
-        return "tarde"
+        elif hora < dt.time(18):
+            return "tarde"
 
-    elif hora >= dt.time(18):
-        return "noite"
+        elif hora >= dt.time(18):
+            return "noite"
+
+    except Exception as e:
+        print("Error has occured", e)
+        raise Exception(e)
 
 
 def parse2(text):
@@ -233,13 +302,13 @@ if __name__ == "__main__":
 
         for i, prompt in enumerate(prompts, 1):
             print(f"\n--- Test {i}: {prompt}")
-            try:
-                result = parse2(prompt)
-                print(json.dumps(
-                    result,
-                    ensure_ascii=False,
-                    default=str,
-                    indent=2,
-                ))
-            except Exception as e:
-                print(f"ERROR: {type(e).__name__}: {e}")
+            result = parse2(prompt)
+            print(result)
+            has_error = any(
+                isinstance(value, dict) and "error" in value
+                for value in result.values()
+            )
+
+            if has_error:
+                print(f"\n--- Test {i}: {prompt}")
+                print(json.dumps(result, ensure_ascii=False, indent=2, default=str))

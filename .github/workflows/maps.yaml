@@ -1,0 +1,60 @@
+name: Update PMTiles
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build and upload
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          set -e
+
+          # Configuration
+          BBOX="-46.9092627,-23.5237534,-46.7965316,-23.4322639"
+          MAXZOOM=15
+          FILENAME="alphaville.pmtiles"
+
+          ENDPOINT="https://YOUR_ACCOUNT_ID.r2.cloudflarestorage.com"
+          BUCKET="turin-data1"
+          OBJECT_KEY="alphaville.pmtiles"
+
+          SOURCE="https://build.protomaps.com/$(date -u +%Y%m%d).pmtiles"
+
+          # Dependencies
+          sudo apt-get update
+          sudo apt-get install -y awscli jq
+
+          # PMTiles CLI
+          URL=$(curl -fsSL \
+            https://api.github.com/repos/protomaps/go-pmtiles/releases/latest \
+            | jq -r '.assets[] | select(.name | test("Linux_x86_64.*\\.tar\\.gz$")) | .browser_download_url' \
+            | head -n 1)
+
+          curl -fsSL "$URL" -o pmtiles.tar.gz
+          tar -xzf pmtiles.tar.gz pmtiles
+          chmod +x pmtiles
+          sudo mv pmtiles /usr/local/bin/
+
+          # Extract
+          pmtiles extract "$SOURCE" "$FILENAME" \
+            --bbox="$BBOX" \
+            --maxzoom="$MAXZOOM" \
+            --download-threads=8
+
+          pmtiles verify "$FILENAME"
+
+          # Upload
+          aws s3 cp "$FILENAME" "s3://$BUCKET/$OBJECT_KEY" \
+            --endpoint-url "$ENDPOINT" \
+            --content-type "application/vnd.pmtiles"
+```
