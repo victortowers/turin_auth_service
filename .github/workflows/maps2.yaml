@@ -13,7 +13,6 @@ permissions:
 
 concurrency:
   group: pmtiles-sp
-  cancel-in-progress: false
 
 jobs:
   build:
