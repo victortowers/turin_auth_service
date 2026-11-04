@@ -2,20 +2,9 @@ schema_name: Shortbread
 schema_description: A basic, lean, general-purpose vector tile schema for OpenStreetMap data. See https://shortbread.geofabrik.de/
 attribution: <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>
 examples: shortbread.spec.yml
-args:
-  area:
-    description: Geofabrik area to download
-    default: massachusetts
-  osm_url:
-    description: OSM URL to download
-    default: '${ args.area == "planet" ? "aws:latest" : ("geofabrik:" + args.area) }'
 sources:
-  ocean:
-    type: shapefile
-    url: https://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip
   osm:
     type: osm
-    url: '${ args.osm_url }'
     local_path: data/sp.osm.pbf
 definitions:
   # TODO let attribute definitions set multiple keys so you can just use `- *names`
@@ -178,11 +167,6 @@ layers:
 
 ##  Water
 
-- id: ocean
-  features:
-  - source: ocean
-    geometry: polygon
-
 - id: water_polygons
   features:
   - source: osm
@@ -196,6 +180,8 @@ layers:
       natural:
       - glacier
       - water
+      - bay
+      - strait
       waterway:
       - riverbank
       - dock
@@ -566,6 +552,23 @@ layers:
     attributes:
     - key: kind
       value: '${match_value == "wood" ? "forest": match_value}'
+
+  # Grass and open green areas that are not landuse/leisure/natural polygons.
+  - source: osm
+    geometry: polygon
+    min_zoom: 13
+    include_when:
+      landcover:
+      - grass
+      - flowers
+      - shrubbery
+      - shrubs
+      - moss
+      - greenery
+      surface: grass
+    attributes:
+    - key: kind
+      type: match_value
 
 - id: sites
   features:
@@ -1120,7 +1123,7 @@ layers:
     min_zoom: 15
     include_when:
       natural: tree
-    attributes:
+    attributes: &tree_attrs
     - key: species
     - key: genus
     - key: taxon
@@ -1195,12 +1198,30 @@ layers:
       - city_wall
       - fence
       - hedge
+    tile:
+      # Keep simplified geometry close to the source so wall polygons do
+      # not swallow the road/area topology they bound.
+      maxzoom: 9
     attributes:
     - key: kind
       tag_value: barrier
     - *name
     - key: height
     - key: material
+
+- id: tree_polygons
+  features:
+  - source: osm
+    geometry: polygon
+    min_zoom: 15
+    include_when:
+      natural: tree
+    attributes:
+    - key: kind
+      value: tree
+    - key: leaf_type
+    - key: leaf_cycle
+    - key: height
 
 - id: physical_lines
   features:
@@ -1279,6 +1300,27 @@ layers:
       type: match_value
     - *name
     - key: surface
+
+- id: vegetation_lines
+  # OSM convention: way tags starting with a colon (barrier:hedge=yes)
+  # describe the containing way itself, so both are checked as key prefixes.
+  # Huge tile.maxzoom avoids line simplification snugging the line into
+  # the adjacent area so hedge/highway can be joined by topology.
+  tile:
+    maxzoom: 9
+  features:
+  - source: osm
+    geometry: line
+    min_zoom: 12
+    include_when:
+      "barrier:": __any__
+      hedge: __any__
+      landuse: hedge
+    attributes:
+    - key: kind
+      value: hedge
+    - *name
+    - key: height
 
 - id: road_details
   features:
