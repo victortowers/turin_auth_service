@@ -94,7 +94,7 @@ jobs:
            --output=data/sp2.pmtiles \
            --maxzoom="$MAXZOOM" --force
 
-          test -s data/sp.pmtiles
+          test -s data/sp2.pmtiles
 
       # 6. Install PMTiles CLI
 
