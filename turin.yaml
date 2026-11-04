@@ -1,0 +1,300 @@
+
+schema_name: Turin
+schema_description: Custom vector tile schema for Turin, based on OpenStreetMap
+attribution: '© OpenStreetMap contributors'
+version: 1
+
+sources:
+  osm:
+    type: osm
+    local_path: data/sp.osm.pbf
+
+# Convert selected OSM tags into useful data types.
+tag_mappings:
+  lanes: integer
+  layer: integer
+  population: integer
+
+layers:
+
+  # --------------------------------------------------
+  # 1. TRANSPORTATION
+  # --------------------------------------------------
+  - id: transportation
+    buffer: 8
+    features:
+      - source: osm
+        geometry: line
+        include_when:
+          highway: __any__
+        min_zoom:
+          default_value: 13
+          overrides:
+            5:
+              highway: motorway
+            6:
+              highway: trunk
+            7:
+              highway: primary
+            8:
+              highway: secondary
+            9:
+              highway: tertiary
+            11:
+              highway:
+                - residential
+                - unclassified
+                - living_street
+                - road
+            13:
+              highway:
+                - service
+                - track
+            14:
+              highway:
+                - footway
+                - path
+                - cycleway
+                - pedestrian
+                - steps
+        attributes:
+          - key: class
+            tag_value: highway
+          - key: name
+            tag_value: name
+          - key: ref
+            tag_value: ref
+          - key: surface
+            tag_value: surface
+          - key: lanes
+            tag_value: lanes
+            type: integer
+          - key: maxspeed
+            tag_value: maxspeed
+          - key: oneway
+            tag_value: oneway
+            type: direction
+          - key: bridge
+            tag_value: bridge
+          - key: tunnel
+            tag_value: tunnel
+          - key: access
+            tag_value: access
+          - key: motor_vehicle
+            tag_value: motor_vehicle
+          - key: bicycle
+            tag_value: bicycle
+          - key: foot
+            tag_value: foot
+          - key: service
+            tag_value: service
+          - key: layer
+            tag_value: layer
+            type: integer
+
+  # --------------------------------------------------
+  # 2. BUILDINGS
+  # --------------------------------------------------
+  - id: buildings
+    buffer: 8
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 13
+        include_when:
+          building: __any__
+        attributes:
+          - key: class
+            tag_value: building
+          - key: name
+            tag_value: name
+          - key: height
+            tag_value: height
+          - key: levels
+            tag_value: building:levels
+            type: integer
+          - key: min_height
+            tag_value: min_height
+          - key: amenity
+            tag_value: amenity
+          - key: shop
+            tag_value: shop
+          - key: office
+            tag_value: office
+
+  # --------------------------------------------------
+  # 3. WATER
+  # --------------------------------------------------
+  - id: water
+    buffer: 8
+    features:
+      # Water polygons
+      - source: osm
+        geometry: polygon
+        min_zoom: 5
+        include_when:
+          __any__:
+            natural:
+              - water
+              - wetland
+            waterway: riverbank
+            landuse: reservoir
+            water: __any__
+        attributes:
+          - key: class
+            coalesce:
+              - tag_value: water
+              - tag_value: natural
+              - tag_value: waterway
+              - tag_value: landuse
+          - key: name
+            tag_value: name
+
+      # Waterway lines
+      - source: osm
+        geometry: line
+        min_zoom: 8
+        include_when:
+          waterway:
+            - river
+            - canal
+            - stream
+            - drain
+            - ditch
+        attributes:
+          - key: class
+            tag_value: waterway
+          - key: name
+            tag_value: name
+          - key: intermittent
+            tag_value: intermittent
+
+  # --------------------------------------------------
+  # 4. LAND USE
+  # --------------------------------------------------
+  - id: landuse
+    buffer: 8
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 5
+        include_when:
+          __any__:
+            landuse:
+              - residential
+              - commercial
+              - industrial
+              - retail
+              - forest
+              - farmland
+              - meadow
+              - grass
+              - cemetery
+              - military
+              - construction
+            leisure:
+              - park
+              - garden
+              - pitch
+              - golf_course
+            natural:
+              - wood
+              - scrub
+              - grassland
+              - heath
+        attributes:
+          - key: class
+            coalesce:
+              - tag_value: landuse
+              - tag_value: leisure
+              - tag_value: natural
+          - key: name
+            tag_value: name
+
+  # --------------------------------------------------
+  # 5. PLACES
+  # --------------------------------------------------
+  - id: places
+    buffer: 64
+    features:
+      - source: osm
+        geometry: point
+        min_zoom: 4
+        include_when:
+          place:
+            - city
+            - town
+            - village
+            - suburb
+            - neighbourhood
+            - hamlet
+            - locality
+        attributes:
+          - key: class
+            tag_value: place
+          - key: name
+            tag_value: name
+          - key: name_en
+            tag_value: name:en
+          - key: population
+            tag_value: population
+            type: integer
+          - key: capital
+            tag_value: capital
+
+  # --------------------------------------------------
+  # 6. INFRASTRUCTURE
+  # --------------------------------------------------
+  - id: infrastructure
+    buffer: 8
+    features:
+      # Railway, power lines and other linear infrastructure
+      - source: osm
+        geometry: line
+        min_zoom: 9
+        include_when:
+          __any__:
+            railway: __any__
+            power:
+              - line
+              - minor_line
+            aerialway: __any__
+            man_made:
+              - pipeline
+              - pier
+              - breakwater
+        attributes:
+          - key: railway
+            tag_value: railway
+          - key: power
+            tag_value: power
+          - key: aerialway
+            tag_value: aerialway
+          - key: man_made
+            tag_value: man_made
+          - key: name
+            tag_value: name
+          - key: electrified
+            tag_value: electrified
+
+      # Railway stations and infrastructure points
+      - source: osm
+        geometry: point
+        min_zoom: 11
+        include_when:
+          __any__:
+            railway:
+              - station
+              - halt
+              - tram_stop
+              - subway_entrance
+            aeroway:
+              - aerodrome
+              - terminal
+        attributes:
+          - key: railway
+            tag_value: railway
+          - key: aeroway
+            tag_value: aeroway
+          - key: name
+            tag_value: name
