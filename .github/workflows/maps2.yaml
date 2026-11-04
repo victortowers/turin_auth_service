@@ -88,10 +88,10 @@ jobs:
             https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar \
             -o planetiler.jar
 
-          java -Xmx8g -jar planetiler.jar \
-           --osm-path=data/sp.osm.pbf \
+          java -Xmx8g -jar planetiler.jar generate-custom \
+           --schema=turin.yaml \
            --output=data/sp.pmtiles \
-           --maxzoom="$MAXZOOM" --download --force
+           --maxzoom="$MAXZOOM" --force
 
           test -s data/sp.pmtiles
 
