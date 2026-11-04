@@ -21,14 +21,14 @@ jobs:
 
           # Configuration
           BBOX="-74.0073396,-36.9635718,-32.211958,40.1918566"
-          MAXZOOM=21
+          MAXZOOM=20
           FILENAME="sp.pmtiles"
 
           ENDPOINT="https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com/"
           BUCKET="maps"
           OBJECT_KEY="sp.pmtiles"
 
-          SOURCE="https://build.protomaps.com/$(date -u +%Y%m%d).pmtiles"
+          SOURCE="https://build.protomaps.com/$(TZ="America/Sao_Paulo" date -d "yesterday" +%Y%m%d).pmtiles"
 
           # Dependencies
           sudo apt-get update
