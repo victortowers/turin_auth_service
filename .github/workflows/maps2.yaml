@@ -80,20 +80,20 @@ jobs:
 
       - name: Generate tiles
         run: |
-        set -Eeuo pipefail
+          set -Eeuo pipefail
 
-        mkdir -p data
+          mkdir -p data
 
-        curl -fL \
-          https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar \
-          -o planetiler.jar
+          curl -fL \
+            https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar \
+            -o planetiler.jar
 
-        java -Xmx8g -jar planetiler.jar \
-         --osm-path=data/sp.osm.pbf \
-         --output=data/sp.pmtiles \
-         --maxzoom="$MAXZOOM"
+          java -Xmx8g -jar planetiler.jar \
+           --osm-path=data/sp.osm.pbf \
+           --output=data/sp.pmtiles \
+           --maxzoom="$MAXZOOM"
 
-    test -s data/sp.pmtiles
+          test -s data/sp.pmtiles
 
       # 6. Install PMTiles CLI
 
