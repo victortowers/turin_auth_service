@@ -91,7 +91,7 @@ jobs:
           java -Xmx8g -jar planetiler.jar \
            --osm-path=data/sp.osm.pbf \
            --output=data/sp.pmtiles \
-           --maxzoom="$MAXZOOM" --download
+           --maxzoom="$MAXZOOM" --download --force
 
           test -s data/sp.pmtiles
 
