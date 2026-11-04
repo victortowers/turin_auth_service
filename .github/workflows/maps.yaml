@@ -20,7 +20,7 @@ jobs:
           set -e
 
           # Configuration
-          BBOX="-74.0073396,-36.9635718,-32.211958,40.1918566"
+          BBOX="-47.684548,-24.348838,-42.775516,-22.197947"
           MAXZOOM=20
           FILENAME="sp.pmtiles"
 
