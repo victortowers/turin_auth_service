@@ -1,0 +1,627 @@
+
+schema_name: Turin
+schema_description: >
+  Turin vector basemap based on OpenStreetMap.
+  Protomaps-compatible core layers with additional natural,
+  urban infrastructure, tree, and road-detail layers.
+
+attribution: >
+  © OpenStreetMap contributors
+
+version: 1
+
+args:
+  maxzoom: 15
+  minzoom: 0
+
+sources:
+  osm:
+    type: osm
+    local_path: data/region.osm.pbf
+
+layers:
+
+  # ============================================================
+  # CORE BASEMAP LAYERS
+  # ============================================================
+
+  # 1. EARTH
+  # Coastlines and broad physical land features.
+  - id: earth
+    features:
+      - source: osm
+        geometry: line
+        min_zoom: 0
+        include_when:
+          natural: coastline
+        attributes:
+          - key: kind
+            value: coastline
+
+  # 2. LANDCOVER
+  # Broad natural cover types.
+  # OSM coverage varies; this is not a replacement for a
+  # global landcover dataset.
+  - id: landcover
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 5
+        include_when:
+          natural:
+            - wood
+            - forest
+            - grassland
+            - scrub
+            - heath
+            - wetland
+            - bare_rock
+            - scree
+            - sand
+            - glacier
+            - fell
+            - tundra
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+
+  # 3. LANDUSE
+  # Parks, gardens, farms, residential and other land-use areas.
+  - id: landuse
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 7
+        include_when:
+          landuse:
+            - forest
+            - farmland
+            - farmyard
+            - meadow
+            - grass
+            - orchard
+            - vineyard
+            - residential
+            - commercial
+            - industrial
+            - retail
+            - recreation_ground
+            - cemetery
+            - allotments
+            - quarry
+            - landfill
+            - brownfield
+            - garages
+            - railway
+            - military
+            - village_green
+          leisure:
+            - park
+            - garden
+            - playground
+            - golf_course
+            - nature_reserve
+            - sports_centre
+            - pitch
+          amenity:
+            - grave_yard
+          natural:
+            - wood
+            - beach
+            - grassland
+            - scrub
+            - heath
+            - wetland
+            - bare_rock
+            - sand
+            - scree
+            - shingle
+          wetland:
+            - bog
+            - fen
+            - marsh
+            - reedbed
+            - swamp
+            - saltmarsh
+            - tidalflat
+            - wet_meadow
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+
+  # 4. WATER
+  # Water polygons and waterways.
+  - id: water
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 5
+        include_when:
+          natural:
+            - water
+            - glacier
+          waterway:
+            - riverbank
+            - dock
+            - canal
+          landuse:
+            - reservoir
+            - basin
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+
+      - source: osm
+        geometry: line
+        min_zoom: 7
+        include_when:
+          waterway:
+            - river
+            - canal
+            - stream
+            - ditch
+            - drain
+            - tidal_channel
+            - pressurised
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+          - key: tunnel
+          - key: bridge
+
+  # 5. BOUNDARIES
+  - id: boundaries
+    features:
+      - source: osm
+        geometry: line
+        min_zoom: 3
+        include_when:
+          __all__:
+            - boundary: administrative
+            - admin_level:
+                - "2"
+                - "3"
+                - "4"
+                - "5"
+                - "6"
+                - "7"
+                - "8"
+        attributes:
+          - key: admin_level
+            type: integer
+          - key: name
+          - key: name:en
+          - key: disputed
+          - key: maritime
+
+  # 6. PLACES
+  - id: places
+    features:
+      - source: osm
+        geometry: point
+        min_zoom: 4
+        include_when:
+          place:
+            - continent
+            - country
+            - state
+            - region
+            - province
+            - city
+            - town
+            - village
+            - hamlet
+            - suburb
+            - quarter
+            - neighbourhood
+            - isolated_dwelling
+            - locality
+            - island
+        attributes:
+          - key: kind
+            tag_value: place
+          - key: name
+          - key: name:en
+          - key: population
+            type: integer
+          - key: capital
+
+  # 7. BUILDINGS
+  - id: buildings
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 12
+        include_when:
+          building: __any__
+        exclude_when:
+          building: no
+        attributes:
+          - key: kind
+            tag_value: building
+          - key: name
+          - key: height
+          - key: min_height
+          - key: building:levels
+          - key: layer
+            type: integer
+          - key: roof:shape
+          - key: roof:colour
+
+  # 8. ROADS
+  # Main road geometry and transport lines.
+  - id: roads
+    features:
+      - source: osm
+        geometry: line
+        min_zoom: 5
+        include_when:
+          highway:
+            - motorway
+            - motorway_link
+            - trunk
+            - trunk_link
+            - primary
+            - primary_link
+            - secondary
+            - secondary_link
+            - tertiary
+            - tertiary_link
+            - unclassified
+            - residential
+            - living_street
+            - service
+            - pedestrian
+            - track
+            - footway
+            - steps
+            - path
+            - cycleway
+            - busway
+            - bus_guideway
+        attributes:
+          - key: kind
+            tag_value: highway
+          - key: name
+          - key: ref
+          - key: surface
+          - key: service
+          - key: bridge
+          - key: tunnel
+          - key: layer
+            type: integer
+          - key: oneway
+          - key: access
+
+  # 9. POIS
+  # A deliberately broad, curated set of useful map features.
+  - id: pois
+    features:
+      - source: osm
+        geometry: point
+        min_zoom: 13
+        include_when:
+          amenity:
+            - arts_centre
+            - atm
+            - bank
+            - bar
+            - bench
+            - bicycle_rental
+            - cafe
+            - car_rental
+            - car_wash
+            - cinema
+            - clinic
+            - college
+            - community_centre
+            - courthouse
+            - dentist
+            - doctors
+            - drinking_water
+            - fire_station
+            - fountain
+            - hospital
+            - library
+            - marketplace
+            - pharmacy
+            - place_of_worship
+            - police
+            - post_box
+            - post_office
+            - school
+            - university
+            - veterinary
+            - restaurant
+            - fast_food
+            - toilets
+            - parking
+          shop: __any__
+          tourism:
+            - attraction
+            - viewpoint
+            - museum
+            - artwork
+            - information
+            - picnic_site
+            - zoo
+          historic:
+            - castle
+            - monument
+            - memorial
+            - ruins
+            - archaeological_site
+          natural:
+            - peak
+            - spring
+            - cave_entrance
+            - volcano
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+          - key: name:en
+          - key: cuisine
+          - key: opening_hours
+          - key: wheelchair
+
+  # 10. TRANSIT
+  - id: transit
+    features:
+      - source: osm
+        geometry: point
+        min_zoom: 11
+        include_when:
+          railway:
+            - station
+            - halt
+            - tram_stop
+            - subway_entrance
+          highway:
+            - bus_stop
+          amenity:
+            - bus_station
+            - ferry_terminal
+          aeroway:
+            - aerodrome
+            - helipad
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+          - key: network
+          - key: ref
+
+      - source: osm
+        geometry: line
+        min_zoom: 9
+        include_when:
+          railway:
+            - rail
+            - narrow_gauge
+            - tram
+            - light_rail
+            - subway
+            - monorail
+            - funicular
+        attributes:
+          - key: kind
+            tag_value: railway
+          - key: name
+          - key: tunnel
+          - key: bridge
+          - key: service
+
+  # ============================================================
+  # TURIN EXTENSIONS
+  # ============================================================
+
+  # 11. INDIVIDUAL TREES
+  # Individual mapped OSM tree nodes.
+  # Kept at z15 to avoid clutter at lower zooms.
+  - id: trees
+    features:
+      - source: osm
+        geometry: point
+        min_zoom: 15
+        include_when:
+          natural: tree
+        attributes:
+          - key: species
+          - key: genus
+          - key: taxon
+          - key: leaf_type
+          - key: leaf_cycle
+          - key: height
+          - key: diameter_crown
+          - key: circumference
+          - key: denotation
+
+  # 12. BARRIERS
+  # Walls, fences, hedges, guardrails and other physical barriers.
+  - id: barriers
+    features:
+      - source: osm
+        geometry: line
+        min_zoom: 13
+        include_when:
+          barrier:
+            - wall
+            - city_wall
+            - fence
+            - hedge
+            - retaining_wall
+            - guard_rail
+            - handrail
+            - chain
+            - kerb
+            - jersey_barrier
+            - cycle_barrier
+            - block
+            - log
+            - ditch
+        attributes:
+          - key: kind
+            tag_value: barrier
+          - key: name
+          - key: access
+          - key: height
+          - key: material
+          - key: fence_type
+          - key: wall
+          - key: width
+
+      - source: osm
+        geometry: point
+        min_zoom: 14
+        include_when:
+          barrier:
+            - gate
+            - lift_gate
+            - bollard
+            - entrance
+            - turnstile
+            - stile
+            - kissing_gate
+            - cattle_grid
+            - sump_buster
+        attributes:
+          - key: kind
+            tag_value: barrier
+          - key: access
+          - key: height
+          - key: material
+          - key: locked
+          - key: opening_hours
+
+      - source: osm
+        geometry: polygon
+        min_zoom: 14
+        include_when:
+          barrier:
+            - wall
+            - city_wall
+            - fence
+            - hedge
+        attributes:
+          - key: kind
+            tag_value: barrier
+          - key: name
+          - key: height
+          - key: material
+
+  # 13. PHYSICAL LINES
+  # Cliffs, ridges, embankments and other terrain structures.
+  - id: physical_lines
+    features:
+      - source: osm
+        geometry: line
+        min_zoom: 11
+        include_when:
+          natural:
+            - cliff
+            - ridge
+            - arete
+            - valley
+            - tree_row
+          man_made:
+            - embankment
+            - cutline
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+          - key: height
+          - key: incline
+          - key: ele
+          - key: man_made
+
+  # 14. NATURAL DETAIL
+  # Less common natural polygons and linear features.
+  - id: natural_detail
+    features:
+      - source: osm
+        geometry: polygon
+        min_zoom: 10
+        include_when:
+          natural:
+            - grassland
+            - meadow
+            - heath
+            - shrubbery
+            - tundra
+            - wetland
+            - mangrove
+            - bare_rock
+            - scree
+            - shingle
+            - sand
+            - glacier
+            - fell
+            - salt_pond
+          wetland:
+            - bog
+            - fen
+            - marsh
+            - reedbed
+            - saltmarsh
+            - swamp
+            - tidalflat
+            - wet_meadow
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+          - key: surface
+          - key: wetland
+
+      - source: osm
+        geometry: line
+        min_zoom: 12
+        include_when:
+          natural:
+            - tree_row
+            - scrub
+            - cliff
+            - ridge
+            - arete
+            - valley
+        attributes:
+          - key: kind
+            type: match_value
+          - key: name
+          - key: surface
+
+  # 15. ROAD DETAILS
+  # More detailed road metadata for Turin-specific styling,
+  # filtering and possible routing overlays.
+  - id: road_details
+    features:
+      - source: osm
+        geometry: line
+        min_zoom: 13
+        include_when:
+          highway: __any__
+        attributes:
+          - key: highway
+          - key: surface
+          - key: smoothness
+          - key: lanes
+          - key: maxspeed
+          - key: access
+          - key: motor_vehicle
+          - key: oneway
+          - key: lit
+          - key: bridge
+          - key: tunnel
+          - key: layer
+            type: integer
+          - key: sidewalk
+          - key: cycleway
+          - key: foot
+          - key: bicycle
+          - key: vehicle
