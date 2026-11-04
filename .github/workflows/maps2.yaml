@@ -91,7 +91,7 @@ jobs:
 
           java -Xmx8g -jar planetiler.jar generate-custom \
            --schema=turin.yaml \
-           --output=data/sp.pmtiles \
+           --output=data/sp2.pmtiles \
            --maxzoom="$MAXZOOM" --force
 
           test -s data/sp.pmtiles
@@ -129,7 +129,7 @@ jobs:
           set -Eeuo pipefail
 
           aws s3 cp \
-            data/sp.pmtiles \
+            data/sp2.pmtiles \
             "s3://$R2_BUCKET/$R2_OBJECT" \
             --endpoint-url "$R2_ENDPOINT" \
             --content-type "application/vnd.pmtiles" \
