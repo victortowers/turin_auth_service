@@ -17,7 +17,7 @@ args:
 sources:
   osm:
     type: osm
-    local_path: data/region.osm.pbf
+    local_path: data/sp.osm.pbf
 
 layers:
 
