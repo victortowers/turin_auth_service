@@ -31,7 +31,7 @@ jobs:
 
       R2_ENDPOINT: "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
       R2_BUCKET: "maps"
-      R2_OBJECT: "sp.pmtiles"
+      R2_OBJECT: "sp2.pmtiles"
 
     steps:
       # 1. Checkout
