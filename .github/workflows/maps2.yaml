@@ -1,0 +1,153 @@
+
+name: Build and Update PMTiles
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pmtiles-sp
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    env:
+      BBOX: "-47.684548,-24.348838,-42.775516,-22.197947"
+      MAXZOOM: "20"
+
+      PROFILE_DIR: "turin-profile"
+      PROFILE_MAIN_CLASS: "br.turin.tiles.TurinProfile"
+
+      PBF_URL: "https://example.com/sao-paulo.osm.pbf"
+
+      R2_ENDPOINT: "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
+      R2_BUCKET: "maps"
+      R2_OBJECT: "sp.pmtiles"
+
+    steps:
+      # 1. Checkout
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Java and Maven
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: turin-profile/pom.xml
+
+      - name: Install dependencies
+        run: |
+          set -Eeuo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y maven awscli curl jq
+
+          java --version
+          mvn --version
+
+      # 3. Download OSM data
+
+      - name: Download OSM PBF
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p data
+
+          curl -fL \
+            --retry 3 \
+            --retry-delay 5 \
+            "$PBF_URL" \
+            -o data/sp.osm.pbf
+
+          test -s data/sp.osm.pbf
+
+          ls -lh data/sp.osm.pbf
+
+      # 4. Compile custom profile
+
+      - name: Build Turin profile
+        run: |
+          set -Eeuo pipefail
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            -f "$PROFILE_DIR/pom.xml" \
+            clean verify
+
+      # 5. Generate vector tiles
+
+      - name: Generate tiles
+        run: |
+          set -Eeuo pipefail
+
+          mvn \
+            --batch-mode \
+            --no-transfer-progress \
+            -f "$PROFILE_DIR/pom.xml" \
+            org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+            -Dexec.mainClass="$PROFILE_MAIN_CLASS" \
+            -Dexec.args="--osm-path=../data/sp.osm.pbf --output=../data/sp.pmtiles --maxzoom=$MAXZOOM"
+
+          test -s data/sp.pmtiles
+
+      # 6. Install PMTiles CLI
+
+      - name: Install PMTiles
+        run: |
+          set -Eeuo pipefail
+
+          URL=$(curl -fsSL \
+            https://api.github.com/repos/protomaps/go-pmtiles/releases/latest \
+            | jq -er '[.assets[]
+              | select(.name | test("Linux_x86_64.*\\.tar\\.gz$"))]
+              | first
+              | .browser_download_url')
+
+          curl -fL "$URL" -o pmtiles.tar.gz
+
+          tar -xzf pmtiles.tar.gz pmtiles
+
+          sudo install pmtiles /usr/local/bin/pmtiles
+
+      # 7. Validate archive
+
+      - name: Verify PMTiles
+        run: |
+          set -Eeuo pipefail
+
+          pmtiles verify data/sp.pmtiles
+          pmtiles show data/sp.pmtiles
+
+          ls -lh data/sp.pmtiles
+
+      # 8. Deploy to Cloudflare R2
+
+      - name: Upload to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -Eeuo pipefail
+
+          aws s3 cp \
+            data/sp.pmtiles \
+            "s3://$R2_BUCKET/$R2_OBJECT" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --content-type "application/vnd.pmtiles" \
+            --only-show-errors
