@@ -84,7 +84,6 @@ jobs:
           mvn \
             --batch-mode \
             --no-transfer-progress \
-            -f "$PROFILE_DIR/pom.xml" \
             clean verify
 
       # 5. Generate vector tiles
@@ -96,7 +95,6 @@ jobs:
           mvn \
             --batch-mode \
             --no-transfer-progress \
-            -f "$PROFILE_DIR/pom.xml" \
             org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
             -Dexec.mainClass="$PROFILE_MAIN_CLASS" \
             -Dexec.args="--osm-path=../data/sp.osm.pbf --output=../data/sp.pmtiles --maxzoom=$MAXZOOM"
