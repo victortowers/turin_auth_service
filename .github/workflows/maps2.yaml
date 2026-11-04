@@ -17,11 +17,11 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 20
 
     env:
       BBOX: "-47.684548,-24.348838,-42.775516,-22.197947"
-      MAXZOOM: "20"
+      MAXZOOM: "15"
 
       PROFILE_DIR: "turin-profile"
       PROFILE_MAIN_CLASS: "br.turin.tiles.TurinProfile"
