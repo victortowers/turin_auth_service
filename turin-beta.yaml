@@ -1198,10 +1198,6 @@ layers:
       - city_wall
       - fence
       - hedge
-    tile:
-      # Keep simplified geometry close to the source so wall polygons do
-      # not swallow the road/area topology they bound.
-      maxzoom: 9
     attributes:
     - key: kind
       tag_value: barrier
@@ -1302,12 +1298,6 @@ layers:
     - key: surface
 
 - id: vegetation_lines
-  # OSM convention: way tags starting with a colon (barrier:hedge=yes)
-  # describe the containing way itself, so both are checked as key prefixes.
-  # Huge tile.maxzoom avoids line simplification snugging the line into
-  # the adjacent area so hedge/highway can be joined by topology.
-  tile:
-    maxzoom: 9
   features:
   - source: osm
     geometry: line
