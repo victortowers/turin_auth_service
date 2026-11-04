@@ -131,7 +131,7 @@ layers:
       # Water polygons
       - source: osm
         geometry: polygon
-        min_zoom: 0
+        min_zoom: 4
         include_when:
           __any__:
             natural:
