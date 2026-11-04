@@ -60,16 +60,16 @@ jobs:
       # 3. Download OSM data
 
       - name: Download OSM PBF
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
         run: |
           set -Eeuo pipefail
 
           mkdir -p data
 
-          curl -fL \
-            --retry 3 \
-            --retry-delay 5 \
-            "$PBF_URL" \
-            -o data/sp.osm.pbf
+          awscli cp 
 
           test -s data/sp.osm.pbf
 
