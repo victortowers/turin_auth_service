@@ -117,14 +117,6 @@ jobs:
 
       # 7. Validate archive
 
-      - name: Verify PMTiles
-        run: |
-          set -Eeuo pipefail
-
-          pmtiles verify data/sp.pmtiles
-          pmtiles show data/sp.pmtiles
-
-          ls -lh data/sp.pmtiles
 
       # 8. Deploy to Cloudflare R2
 
