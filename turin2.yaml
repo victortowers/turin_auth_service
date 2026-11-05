@@ -5,7 +5,7 @@ examples: shortbread.spec.yml
 sources:
   osm:
     type: osm
-    url: https://r2.turinflow.com.br/sudeste2.osm.pbf
+    local_path: data/sp.osm.pbf
 definitions:
   # TODO let attribute definitions set multiple keys so you can just use `- *names`
   attributes:

@@ -27,8 +27,6 @@ jobs:
       PROFILE_DIR: "turin-profile"
       PROFILE_MAIN_CLASS: "br.turin.tiles.TurinProfile"
 
-      PBF_URL: "https://r2.turinflow.com.br/sudeste2.osm.pbf"
-
       R2_ENDPOINT: "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
       R2_BUCKET: "maps"
       R2_OBJECT: "sp2.pmtiles"
