@@ -418,10 +418,6 @@ layers:
     min_zoom:
       default_value: 15
       overrides:
-        8:
-          __all__:
-            place: [ city, town, village, hamlet ]
-            capital: [ yes, '4' ]
         11:
           __all__:
             place: city
