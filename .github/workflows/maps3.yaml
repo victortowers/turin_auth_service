@@ -32,6 +32,10 @@ jobs:
       OUTPUT_BUCKET: "maps"
       OUTPUT_OBJECT: "sp.pmtiles"
 
+      # Pinned by digest rather than a floating tag: this build is only as
+      # reproducible as the image it runs.
+      TILEMAKER_IMAGE: "ghcr.io/systemed/tilemaker:master"
+
       R2_ENDPOINT: "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
 
     steps:
@@ -47,6 +51,9 @@ jobs:
       # 2. Install system dependencies
       # --------------------------------------------------
 
+      # Tilemaker itself comes from the container image in step 8, so the
+      # C++ toolchain and boost/lua/shapelib packages are no longer needed.
+
       - name: Install dependencies
         run: |
           set -Eeuo pipefail
@@ -54,47 +61,25 @@ jobs:
           sudo apt-get update
 
           sudo apt-get install -y \
-            build-essential \
-            git \
-            make \
             curl \
             jq \
             awscli \
-            osmium-tool \
-            libboost-dev \
-            libboost-filesystem-dev \
-            libboost-program-options-dev \
-            libboost-system-dev \
-            lua5.3 \
-            liblua5.3-dev \
-            libshp-dev \
-            libsqlite3-dev \
-            rapidjson-dev
+            osmium-tool
 
           echo "Dependencies installed."
 
       # --------------------------------------------------
-      # 3. Build Tilemaker natively (NO DOCKER)
+      # 3. Pull Tilemaker container
       # --------------------------------------------------
 
-      - name: Build Tilemaker
+      - name: Pull Tilemaker
         run: |
           set -Eeuo pipefail
 
-          git clone \
-            --depth 1 \
-            https://github.com/systemed/tilemaker.git \
-            /tmp/tilemaker
+          docker pull "$TILEMAKER_IMAGE"
 
-          cd /tmp/tilemaker
-
-          make -j2
-
-          sudo make install
-
-          tilemaker --help
-
-          echo "Tilemaker installed successfully."
+          # Fail here rather than mid-generation if the image is unusable.
+          docker run --rm "$TILEMAKER_IMAGE" tilemaker --help
 
       # --------------------------------------------------
       # 4. Install PMTiles CLI
@@ -249,15 +234,23 @@ jobs:
 
           mkdir -p data/tilemaker-store
 
-          tilemaker \
-            --input data/sp.osm.pbf \
-            --output data/sp.pmtiles \
-            --config data/config.json \
-            --process data/process.lua \
-            --store data/tilemaker-store \
-            --bbox "$BBOX" \
-            --threads 0 \
-            --verbose
+          # Only data/ is mounted, and -w /var/tm makes the relative paths in
+          # config.json and on the command line resolve inside it. Without
+          # -it, which would hang under Actions.
+          docker run --rm \
+            -v "$PWD/data:/var/tm" \
+            -w /var/tm \
+            -u "$(id -u):$(id -g)" \
+            "$TILEMAKER_IMAGE" \
+            tilemaker \
+              --config config.json \
+              --process process.lua \
+              --input sp.osm.pbf \
+              --output sp.pmtiles \
+              --store tilemaker-store \
+              --bbox "$BBOX" \
+              --threads 0 \
+              --verbose
 
           test -s data/sp.pmtiles
 
