@@ -100,29 +100,28 @@ jobs:
       # 4. Install PMTiles CLI
       # --------------------------------------------------
 
-      - name: Install PMTiles
-        uses: actions/setup-go@v5
-        with:
-          go-version: "stable"
-
-      - name: Build PMTiles CLI
+      - name: Install PMTiles CLI
         run: |
           set -Eeuo pipefail
 
-          go install github.com/protomaps/go-pmtiles@latest
+          # Use the published release build rather than `go install`: no
+          # toolchain resolution, no GOPATH guessing, and no module download
+          # that can land the binary somewhere other than where we look.
+          URL=$(curl -fsSL \
+            https://api.github.com/repos/protomaps/go-pmtiles/releases/latest \
+            | jq -er '[.assets[]
+              | select(.name | test("Linux_x86_64.*\\.tar\\.gz$"))]
+              | first
+              | .browser_download_url')
 
-          # go-pmtiles builds its binary as "pmtiles", not "go-pmtiles".
-          GO_BIN_DIR="$(go env GOPATH)/bin"
-          ls -l "$GO_BIN_DIR/pmtiles"
+          curl -fL "$URL" -o /tmp/pmtiles.tar.gz
+          tar -xzf /tmp/pmtiles.tar.gz -C /tmp pmtiles
 
-          # /usr/local/bin is always on PATH and persists across steps, so
-          # later steps cannot miss it the way they missed GITHUB_PATH.
-          sudo install -m 0755 "$GO_BIN_DIR/pmtiles" /usr/local/bin/pmtiles
-
-          echo "$GO_BIN_DIR" >> "$GITHUB_PATH"
+          # /usr/local/bin is always on PATH and persists across steps.
+          sudo install -m 0755 /tmp/pmtiles /usr/local/bin/pmtiles
 
           # Fail here, loudly, if the binary is not reachable. Otherwise the
-          # next steps die with an opaque "pmtiles: command not found".
+          # later steps die with an opaque "pmtiles: command not found".
           command -v pmtiles
           pmtiles version
 
