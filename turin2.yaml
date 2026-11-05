@@ -418,30 +418,26 @@ layers:
     min_zoom:
       default_value: 15
       overrides:
-        6:
+        8:
           __all__:
             place: [ city, town, village, hamlet ]
             capital: [ yes, '4' ]
-        8:
+        11:
           __all__:
             place: city
             __not__:
               capital: [ yes, '4' ]
-        10:
+        12:
           __all__:
             place: town
             __not__:
               capital: [ yes, '4' ]
-        11:
-          place: village
-        12:
-          place: hamlet
         13:
-          place: [ suburb, island, locality ]
+          place: village
         14:
-          place: quarter
+          place: hamlet
         15:
-          place: [ neighbourhood, isolated_dwelling, farm ]
+          place: [ suburb, island, locality, quarter, neighbourhood, isolated_dwelling, farm ]
     # TODO z-order
     attributes:
     - key: kind
