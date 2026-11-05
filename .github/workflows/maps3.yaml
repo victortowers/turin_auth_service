@@ -1,0 +1,316 @@
+
+name: Build São Paulo PMTiles (Tilemaker)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: turin-map-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      BBOX: "-47.684548,-24.348838,-42.775516,-22.197947"
+      MINZOOM: "4"
+      MAXZOOM: "15"
+
+      SOURCE_BUCKET: "turin-graph1"
+      SOURCE_OBJECT: "sudeste2.osm.pbf"
+
+      OUTPUT_BUCKET: "maps"
+      OUTPUT_OBJECT: "sp.pmtiles"
+
+      R2_ENDPOINT: "https://a5682a7c9f2732888eedbc7c0071c76c.eu.r2.cloudflarestorage.com"
+
+    steps:
+
+      # --------------------------------------------------
+      # 1. Checkout
+      # --------------------------------------------------
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --------------------------------------------------
+      # 2. Install system dependencies
+      # --------------------------------------------------
+
+      - name: Install dependencies
+        run: |
+          set -Eeuo pipefail
+
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            make \
+            curl \
+            jq \
+            awscli \
+            osmium-tool \
+            libboost-dev \
+            libboost-filesystem-dev \
+            libboost-program-options-dev \
+            libboost-system-dev \
+            lua5.3 \
+            liblua5.3-dev \
+            libshp-dev \
+            libsqlite3-dev \
+            rapidjson-dev
+
+          echo "Dependencies installed."
+
+      # --------------------------------------------------
+      # 3. Build Tilemaker natively (NO DOCKER)
+      # --------------------------------------------------
+
+      - name: Build Tilemaker
+        run: |
+          set -Eeuo pipefail
+
+          git clone \
+            --depth 1 \
+            https://github.com/systemed/tilemaker.git \
+            /tmp/tilemaker
+
+          cd /tmp/tilemaker
+
+          make -j2
+
+          sudo make install
+
+          tilemaker --help
+
+          echo "Tilemaker installed successfully."
+
+      # --------------------------------------------------
+      # 4. Install PMTiles CLI
+      # --------------------------------------------------
+
+      - name: Install PMTiles
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+
+      - name: Build PMTiles CLI
+        run: |
+          set -Eeuo pipefail
+
+          go install github.com/protomaps/go-pmtiles@latest
+
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+          "$(go env GOPATH)/bin/go-pmtiles" version
+
+      # --------------------------------------------------
+      # 5. Download source PBF from R2
+      # --------------------------------------------------
+
+      - name: Download OSM source
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p data
+
+          aws s3 cp \
+            "s3://${SOURCE_BUCKET}/${SOURCE_OBJECT}" \
+            data/source.osm.pbf \
+            --endpoint-url "$R2_ENDPOINT" \
+            --only-show-errors
+
+          test -s data/source.osm.pbf
+
+          ls -lh data/source.osm.pbf
+
+      # --------------------------------------------------
+      # 6. Extract São Paulo geographic area
+      # --------------------------------------------------
+
+      - name: Extract geographic region
+        run: |
+          set -Eeuo pipefail
+
+          osmium extract \
+            --bbox="$BBOX" \
+            --strategy=smart \
+            --output=data/sp.osm.pbf \
+            data/source.osm.pbf
+
+          test -s data/sp.osm.pbf
+
+          echo "Extracted PBF:"
+          ls -lh data/sp.osm.pbf
+
+      # --------------------------------------------------
+      # 7. Download OpenMapTiles-compatible profile
+      # --------------------------------------------------
+
+      - name: Prepare Tilemaker profile
+        run: |
+          set -Eeuo pipefail
+
+          curl -fsSL \
+            https://raw.githubusercontent.com/systemed/tilemaker/master/resources/config-openmaptiles.json \
+            -o data/config-original.json
+
+          curl -fsSL \
+            https://raw.githubusercontent.com/systemed/tilemaker/master/resources/process-openmaptiles.lua \
+            -o data/process.lua
+
+          # Remove external Natural Earth and coastline layers.
+          # These require additional datasets that are not
+          # included in the OSM PBF.
+
+          jq \
+            --argjson min "$MINZOOM" \
+            --argjson max "$MAXZOOM" \
+            '
+              del(
+                .layers.ocean,
+                .layers.urban_areas,
+                .layers.ice_shelf,
+                .layers.glacier
+              )
+              | .settings.minzoom = $min
+              | .settings.maxzoom = $max
+              | .settings.basezoom = $max
+              | .settings.bounding_box = [
+                  -47.684548,
+                  -24.348838,
+                  -42.775516,
+                  -22.197947
+                ]
+              | .layers |= with_entries(
+                  .value.maxzoom = $max
+                )
+            ' \
+            data/config-original.json \
+            > data/config.json
+
+          # Validate JSON.
+          jq empty data/config.json
+
+          # Ensure essential layers exist.
+          jq -e '
+            .layers.transportation
+            and .layers.building
+            and .layers.water
+            and .layers.landcover
+            and .layers.landuse
+          ' data/config.json
+
+          test -s data/process.lua
+
+          echo "Profile prepared successfully."
+
+      # --------------------------------------------------
+      # 8. Generate PMTiles
+      # --------------------------------------------------
+
+      - name: Generate PMTiles
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p data/tilemaker-store
+
+          tilemaker \
+            --input data/sp.osm.pbf \
+            --output data/sp.pmtiles \
+            --config data/config.json \
+            --process data/process.lua \
+            --store data/tilemaker-store \
+            --bbox "$BBOX" \
+            --threads 0 \
+            --verbose
+
+          test -s data/sp.pmtiles
+
+          echo "Generated archive:"
+          ls -lh data/sp.pmtiles
+
+      # --------------------------------------------------
+      # 9. Inspect archive metadata
+      # --------------------------------------------------
+
+      - name: Inspect PMTiles
+        run: |
+          set -Eeuo pipefail
+
+          pmtiles show data/sp.pmtiles --header-json
+
+      # --------------------------------------------------
+      # 10. Verify archive
+      # --------------------------------------------------
+
+      - name: Validate PMTiles
+        run: |
+          set -Eeuo pipefail
+
+          pmtiles verify data/sp.pmtiles
+
+          echo "PMTiles validation passed."
+
+      # --------------------------------------------------
+      # 11. Upload archive to Cloudflare R2
+      # --------------------------------------------------
+
+      - name: Upload PMTiles to R2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -Eeuo pipefail
+
+          FILE_SIZE=$(stat -c%s data/sp.pmtiles)
+
+          # PutObject supports files up to 5 GiB.
+          if [ "$FILE_SIZE" -gt 5368709120 ]; then
+            echo "Archive exceeds single PutObject limit."
+            exit 1
+          fi
+
+          aws s3api put-object \
+            --bucket "$OUTPUT_BUCKET" \
+            --key "$OUTPUT_OBJECT" \
+            --body data/sp.pmtiles \
+            --endpoint-url "$R2_ENDPOINT" \
+            --content-type "application/vnd.pmtiles"
+
+          echo "Upload completed:"
+          echo "s3://${OUTPUT_BUCKET}/${OUTPUT_OBJECT}"
+
+      # --------------------------------------------------
+      # 12. Final report
+      # --------------------------------------------------
+
+      - name: Build summary
+        if: success()
+        run: |
+          set -Eeuo pipefail
+
+          {
+            echo "## Turin map build successful"
+            echo ""
+            echo "- Generator: Tilemaker"
+            echo "- Output: PMTiles"
+            echo "- Zoom: ${MINZOOM}-${MAXZOOM}"
+            echo "- Bounds: ${BBOX}"
+            echo "- Destination: s3://${OUTPUT_BUCKET}/${OUTPUT_OBJECT}"
+            echo "- Size: $(du -h data/sp.pmtiles | cut -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
