@@ -1,7 +1,7 @@
 schema_name: Shortbread
 schema_description: A basic, lean, general-purpose vector tile schema for OpenStreetMap data. See https://shortbread.geofabrik.de/
 attribution: <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>
-examples: shortbread.spec.yml
+
 sources:
   osm:
     type: osm
@@ -164,15 +164,12 @@ definitions:
     - zoo
 
 layers:
-
-##  Water
-
 - id: water_polygons
   features:
   - source: osm
     geometry: polygon
     min_zoom:
-      default_value: 4
+      default_value: 0
       overrides: &water_zoom_overrides
         10:
           waterway: [ dock, canal ]
@@ -217,7 +214,7 @@ layers:
   - source: osm
     geometry: line
     min_zoom:
-      default_value: 9
+      default_value: 8
       overrides:
         14:
           waterway: [ stream, ditch ]
@@ -402,7 +399,7 @@ layers:
     exclude_when:
       name: ''
     min_zoom:
-      default_value: 10
+      default_value: 8
       overrides:
         4:
           __all__:
@@ -624,12 +621,12 @@ layers:
           highway: tertiary
         11:
           aeroway: runway
-        12:
           highway:
           - bus_guideway
           - busway
           - residential
           - unclassified
+
     #  TODO   min_tile_cover_size: 0
     # TODO z-order
     include_when:
@@ -931,7 +928,7 @@ layers:
   - source: osm
     geometry: point
     min_zoom: &public_transport_zoom
-      default_value: 14
+      default_value: 13
       overrides:
         11:
           aeroway: aerodrome
