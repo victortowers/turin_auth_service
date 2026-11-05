@@ -22,7 +22,9 @@ jobs:
     env:
       BBOX: "-47.684548,-24.348838,-42.775516,-22.197947"
       MINZOOM: "4"
-      MAXZOOM: "15"
+      # Tilemaker needs the OpenMapTiles profile's own max zoom of 14 as the
+      # base zoom; asking for 15 means every layer is overzoomed from z14.
+      MAXZOOM: "14"
 
       SOURCE_BUCKET: "turin-graph1"
       SOURCE_OBJECT: "sudeste2.osm.pbf"
@@ -109,9 +111,20 @@ jobs:
 
           go install github.com/protomaps/go-pmtiles@latest
 
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          # go-pmtiles builds its binary as "pmtiles", not "go-pmtiles".
+          GO_BIN_DIR="$(go env GOPATH)/bin"
+          ls -l "$GO_BIN_DIR/pmtiles"
 
-          "$(go env GOPATH)/bin/go-pmtiles" version
+          # /usr/local/bin is always on PATH and persists across steps, so
+          # later steps cannot miss it the way they missed GITHUB_PATH.
+          sudo install -m 0755 "$GO_BIN_DIR/pmtiles" /usr/local/bin/pmtiles
+
+          echo "$GO_BIN_DIR" >> "$GITHUB_PATH"
+
+          # Fail here, loudly, if the binary is not reachable. Otherwise the
+          # next steps die with an opaque "pmtiles: command not found".
+          command -v pmtiles
+          pmtiles version
 
       # --------------------------------------------------
       # 5. Download source PBF from R2
@@ -172,9 +185,9 @@ jobs:
             https://raw.githubusercontent.com/systemed/tilemaker/master/resources/process-openmaptiles.lua \
             -o data/process.lua
 
-          # Remove external Natural Earth and coastline layers.
-          # These require additional datasets that are not
-          # included in the OSM PBF.
+          # Drop only the layers whose data ships as separate external
+          # shapefiles that we do not have. Note that "water" is NOT one of
+          # them: deleting it throws away every lake and reservoir.
 
           jq \
             --argjson min "$MINZOOM" \
@@ -186,6 +199,14 @@ jobs:
                 .layers.ice_shelf,
                 .layers.glacier
               )
+              | .layers.water = {
+                  minzoom: 6,
+                  maxzoom: $max,
+                  simplify_below: 12,
+                  simplify_level: 0.0003,
+                  simplify_algorithm: "visvalingam",
+                  repair_polygons: true
+                }
               | .settings.minzoom = $min
               | .settings.maxzoom = $max
               | .settings.basezoom = $max
@@ -212,6 +233,7 @@ jobs:
             and .layers.water
             and .layers.landcover
             and .layers.landuse
+            and .layers.park
           ' data/config.json
 
           test -s data/process.lua
@@ -239,6 +261,10 @@ jobs:
             --verbose
 
           test -s data/sp.pmtiles
+
+          # An existing but truncated archive is worth catching before the
+          # inspect/verify steps, where the error is harder to read.
+          test "$(stat -c%s data/sp.pmtiles)" -gt 1000
 
           echo "Generated archive:"
           ls -lh data/sp.pmtiles
