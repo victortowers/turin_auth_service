@@ -232,11 +232,14 @@ jobs:
         run: |
           set -Eeuo pipefail
 
-          mkdir -p data/tilemaker-store
-
           # Only data/ is mounted, and -w /var/tm makes the relative paths in
           # config.json and on the command line resolve inside it. Without
           # -it, which would hang under Actions.
+          #
+          # No --store: tilemaker keeps features in RAM and the working set
+          # here is small enough. --store writes an on-disk scratch tree that
+          # has to be creatable by the container user, which is the usual
+          # source of EACCES failures mid-run.
           docker run --rm \
             -v "$PWD/data:/var/tm" \
             -w /var/tm \
@@ -247,7 +250,6 @@ jobs:
               --process process.lua \
               --input sp.osm.pbf \
               --output sp.pmtiles \
-              --store tilemaker-store \
               --bbox "$BBOX" \
               --threads 0 \
               --verbose
