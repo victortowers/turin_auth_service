@@ -3,6 +3,12 @@ schema_description: A basic, lean, general-purpose vector tile schema for OpenSt
 attribution: <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>
 
 sources:
+  # Ocean fill for everything outside the OSM data extent. Replaces the
+  # upstream shapefile source, whose download URL does not resolve.
+  natural_earth:
+    type: shapefile
+    url: https://naciscdn.org/naturalearth/110m/physical/ne_110m_ocean.zip
+    projection: EPSG:4326
   osm:
     type: osm
     local_path: data/sp.osm.pbf
@@ -164,12 +170,17 @@ definitions:
     - zoo
 
 layers:
+- id: ocean
+  features:
+  - source: natural_earth
+    geometry: polygon
+
 - id: water_polygons
   features:
   - source: osm
     geometry: polygon
     min_zoom:
-      default_value: 0
+      default_value: 4
       overrides: &water_zoom_overrides
         10:
           waterway: [ dock, canal ]
@@ -177,6 +188,8 @@ layers:
       natural:
       - glacier
       - water
+      - bay
+      - strait
       waterway:
       - riverbank
       - dock
@@ -398,23 +411,37 @@ layers:
       - locality
     exclude_when:
       name: ''
+    # Turin tuning: the upstream defaults (11) floated every suburb, quarter,
+    # neighbourhood, farm and isolated dwelling as soon as the city itself
+    # appeared, which buried the map in labels. Small places now wait until
+    # they are worth the ink.
     min_zoom:
-      default_value: 8
+      default_value: 15
       overrides:
-        4:
+        6:
           __all__:
             place: [ city, town, village, hamlet ]
             capital: [ yes, '4' ]
-        6:
+        8:
           __all__:
             place: city
             __not__:
               capital: [ yes, '4' ]
-        7:
+        10:
           __all__:
             place: town
             __not__:
               capital: [ yes, '4' ]
+        11:
+          place: village
+        12:
+          place: hamlet
+        13:
+          place: [ suburb, island, locality ]
+        14:
+          place: quarter
+        15:
+          place: [ neighbourhood, isolated_dwelling, farm ]
     # TODO z-order
     attributes:
     - key: kind
@@ -462,6 +489,12 @@ layers:
     include_when:
       amenity:
       - grave_yard
+      landcover:
+      - grass
+      - flowers
+      - shrubbery
+      - shrubs
+      - moss
       landuse:
       - allotments
       - brownfield
@@ -477,6 +510,7 @@ layers:
       - industrial
       - landfill
       - meadow
+      - military
       - orchard
       - plant_nursery
       - quarry
@@ -492,9 +526,12 @@ layers:
       - miniature_golf
       - park
       - playground
+      - pitch
+      - sports_centre
       natural:
       - bare_rock
       - beach
+      - glacier
       - grassland
       - heath
       - sand
@@ -502,11 +539,16 @@ layers:
       - scrub
       - shingle
       - wood
+      surface: grass
       wetland:
       - bog
+      - fen
       - marsh
+      - reedbed
+      - saltmarsh
       - string_bog
       - swamp
+      - tidalflat
       - wet_meadow
     min_zoom:
       default_value: 11
@@ -533,9 +575,16 @@ layers:
         13:
           amenity: grave_yard
           landuse: cemetery
+          natural: glacier
+        14:
+          landcover: __any__
+          leisure: [ pitch, sports_centre ]
+          surface: grass
     attributes:
     - key: kind
-      value: '${match_value == "wood" ? "forest": match_value}'
+      # "surface" is not a land cover of its own; report it as grass so
+      # styles only have to know one keyword for it.
+      value: '${match_value == "wood" ? "forest" : (match_value == "surface" ? "grass" : match_value)}'
 
 - id: sites
   features:
@@ -1081,3 +1130,194 @@ layers:
     min_zoom: 14
     include_when: *poi_filter
     attributes: *poi_attrs
+
+##  Turin Extras
+
+# Physical barriers: walls, fences, hedges and the like. Shortbread has no
+# layer for these, so Turin adds one.
+- id: barriers
+  features:
+  - source: osm
+    geometry: line
+    min_zoom: 13
+    include_when:
+      barrier:
+      - wall
+      - city_wall
+      - fence
+      - hedge
+      - retaining_wall
+      - guard_rail
+      - handrail
+      - chain
+      - kerb
+      - jersey_barrier
+      - cycle_barrier
+      - block
+      - log
+      - ditch
+    # Keep the source vertices at the max zoom so a wall does not get
+    # simplified into the road or area it bounds.
+    tolerance_at_max_zoom: 0
+    attributes:
+    - key: kind
+      tag_value: barrier
+    - *name
+    - key: height
+    - key: material
+    - key: fence_type
+    - key: wall
+    - key: width
+
+  - source: osm
+    geometry: point
+    min_zoom: 14
+    include_when:
+      barrier:
+      - gate
+      - lift_gate
+      - bollard
+      - entrance
+      - turnstile
+      - stile
+      - kissing_gate
+      - cattle_grid
+      - sump_buster
+    attributes:
+    - key: kind
+      tag_value: barrier
+    - key: access
+    - key: height
+    - key: material
+    - key: locked
+    - key: opening_hours
+
+  - source: osm
+    geometry: polygon
+    min_zoom: 14
+    include_when:
+      barrier:
+      - wall
+      - city_wall
+      - fence
+      - hedge
+    tolerance_at_max_zoom: 0
+    attributes:
+    - key: kind
+      tag_value: barrier
+    - *name
+    - key: height
+    - key: material
+
+- id: trees
+  features:
+  - source: osm
+    geometry: point
+    min_zoom: 15
+    include_when:
+      natural: tree
+    attributes: &tree_attrs
+    - key: species
+    - key: genus
+    - key: taxon
+    - key: leaf_type
+    - key: leaf_cycle
+    - key: height
+    - key: diameter_crown
+    - key: circumference
+    - key: denotation
+
+  - source: osm
+    geometry: polygon
+    min_zoom: 15
+    include_when:
+      natural: tree
+    attributes: *tree_attrs
+
+- id: physical_lines
+  features:
+  - source: osm
+    geometry: line
+    min_zoom: 11
+    include_when:
+      natural:
+      - cliff
+      - ridge
+      - arete
+      - valley
+      - tree_row
+      man_made:
+      - embankment
+      - cutline
+    attributes:
+    - key: kind
+      type: match_value
+    - *name
+    - key: height
+    - key: incline
+    - key: ele
+    - key: man_made
+
+- id: natural_detail
+  features:
+  - source: osm
+    geometry: polygon
+    min_zoom: 10
+    include_when:
+      natural:
+      - grassland
+      - meadow
+      - heath
+      - shrubbery
+      - tundra
+      - wetland
+      - mangrove
+      - bare_rock
+      - scree
+      - shingle
+      - sand
+      - glacier
+      - fell
+      - salt_pond
+      wetland:
+      - bog
+      - fen
+      - marsh
+      - reedbed
+      - saltmarsh
+      - swamp
+      - tidalflat
+      - wet_meadow
+    attributes:
+    - key: kind
+      type: match_value
+    - *name
+    - key: surface
+    - key: wetland
+
+- id: road_details
+  features:
+  - source: osm
+    geometry: line
+    min_zoom: 13
+    include_when:
+      highway: __any__
+    attributes:
+    - key: highway
+    - key: surface
+    - key: smoothness
+    - key: lanes
+    - key: maxspeed
+    - key: access
+    - key: motor_vehicle
+    - key: oneway
+    - key: lit
+    - key: bridge
+    - key: tunnel
+    - key: layer
+      type: integer
+    - key: sidewalk
+    - key: cycleway
+    - key: foot
+    - key: bicycle
+    - key: vehicle
