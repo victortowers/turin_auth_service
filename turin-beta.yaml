@@ -763,10 +763,11 @@ layers:
         13:
           area:aeroway: taxiway
     include_when:
+      __all__:
       # TODO this is a really strange difference to street_polygons.
       # https://github.com/shortbread-tiles/shortbread-docs/issues/80
-      area:aeroway: [ runway, taxiway ]
-      highway: [ pedestrian, service ]
+      - area:aeroway: [ runway, taxiway ]
+        highway: [ pedestrian, service ]
     attributes:
     - key: kind
       type: match_value
@@ -877,10 +878,11 @@ layers:
     min_zoom: 14
     include_when:
       __all__:
-      # TODO this is a really strange difference to street_polygons.
-      # https://github.com/shortbread-tiles/shortbread-docs/issues/80
-      - aeroway: [ runway, taxiway ]
-        highway: [ pedestrian, service ]
+      - __any__:
+        # TODO this is a really strange difference to street_polygons.
+        # https://github.com/shortbread-tiles/shortbread-docs/issues/80
+        - aeroway: [ runway, taxiway ]
+          highway: [ pedestrian, service ]
       - name: __any__
     attributes:
     - key: kind
