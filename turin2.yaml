@@ -549,9 +549,12 @@ layers:
     min_zoom:
       default_value: 11
       overrides:
-        7:
-          natural: wood
+        4:
           landuse: forest
+          natural:
+          - beach
+          - sand
+          - wood
         10:
           landuse:
           - brownfield
@@ -565,9 +568,7 @@ layers:
           - railway
           - residential
           - retail
-          natural:
-          - beach
-          - sand
+
         13:
           amenity: grave_yard
           landuse: cemetery
@@ -606,7 +607,7 @@ layers:
   features:
   - source: osm
     geometry: polygon
-    min_zoom: 14
+    min_zoom: 11
     include_when:
       building: __any__
     exclude_when:
@@ -646,14 +647,14 @@ layers:
           highway: motorway%
         6:
           highway: trunk%
-        8:
+        7:
           highway: primary%
           __all__:
             railway: [ rail, narrow_gauge ]
             service: __any__
-        9:
+        8:
           highway: secondary%
-        10:
+        9:
           __all__:
             railway: [ rail, narrow_gauge ]
             service: ''
@@ -664,7 +665,7 @@ layers:
           - subway
           - tram
           highway: tertiary
-        11:
+        10:
           aeroway: runway
           highway:
           - bus_guideway
