@@ -156,7 +156,7 @@ jobs:
 
           ls -lh data/sp.pmtiles
 
-      # 7. Install PMTiles CLI
+                # 7. Install PMTiles CLI
       - name: Install PMTiles
         run: |
           set -Eeuo pipefail
@@ -178,6 +178,9 @@ jobs:
           sudo install pmtiles /usr/local/bin/pmtiles
 
           pmtiles version
+
+          pmtiles show data/sp.pmtiles --header-json
+
 
       # 8. Validate archive
       - name: Validate PMTiles
