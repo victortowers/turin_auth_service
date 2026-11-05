@@ -52,10 +52,9 @@ jobs:
           set -Eeuo pipefail
 
           sudo apt-get update
-          sudo apt-get install -y maven awscli curl jq
+          sudo apt-get install -y default-jre awscli curl jq
 
           java --version
-          mvn --version
 
       # 3. Download OSM data
 
@@ -92,7 +91,7 @@ jobs:
           java -Xmx8g -jar planetiler.jar generate-custom \
            --schema=turin2.yaml \
            --output=data/sp2.pmtiles \
-           --maxzoom="$MAXZOOM" --force
+           --maxzoom="$MAXZOOM" --force --download
 
           test -s data/sp2.pmtiles
 
