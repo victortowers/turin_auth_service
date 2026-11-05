@@ -90,7 +90,7 @@ jobs:
             -o planetiler.jar
 
           java -Xmx8g -jar planetiler.jar generate-custom \
-           --schema=turin-beta.yaml \
+           --schema=turin2.yaml \
            --output=data/sp2.pmtiles \
            --maxzoom="$MAXZOOM" --force
 
