@@ -1,4 +1,4 @@
-name: Build São Paulo PMTiles (Tilemaker)
+name: Build São Paulo PMTiles (Tilemaker 2)
 
 on:
   workflow_dispatch:
@@ -169,7 +169,7 @@ jobs:
                 .layers.glacier
               )
               | .layers.water = {
-                  minzoom: 6,
+                  minzoom: 0,
                   maxzoom: $max,
                   simplify_below: 12,
                   simplify_level: 0.0003,

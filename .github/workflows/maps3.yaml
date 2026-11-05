@@ -3,9 +3,6 @@ name: Build São Paulo PMTiles (Tilemaker)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
 
 permissions:
   contents: read
