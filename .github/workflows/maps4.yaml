@@ -163,7 +163,6 @@ jobs:
             --argjson max "$MAXZOOM" \
             '
               del(
-                .layers.ocean,
                 .layers.urban_areas,
                 .layers.ice_shelf,
                 .layers.glacier
