@@ -44,6 +44,7 @@ steps:
 
         osmium extract \
           --verbose \
+          --strategy=smart \
           --polygon shape.geojson \
           --output /workspace/turin_build/sudeste2.osm.pbf \
           /workspace/turin_build/sudeste.osm.pbf
