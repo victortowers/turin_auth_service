@@ -177,7 +177,7 @@ indptr = np.load(".osm_cache/indptr.npy") #4
 #edge_distance = np.load(".osm_cache/edge_distance.npy", mmap_mode="r")
 #edge_speed = np.load(".osm_cache/edge_speed.npy", mmap_mode="r")
 
-A = sp.csr_matrix((data, indices, indptr), shape=tupe(shape))
+A = sp.csr_matrix((data, indices, indptr), shape=tuple(shape))
 benchmark_count = 1_000_000
 random_indices = np.random.randint(
     0,
