@@ -267,7 +267,6 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
                 "detail": "Out of time. The limit for processing is 4210ms.",
             }
 
-        route_coordinates = routed.tolist()
 
         time_spent = monotonic() - time1
         return {
@@ -275,7 +274,7 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
             "estimated_time_seconds": total_eta,
             "estimated_time_hours": total_eta / 3600,
             "time_spent": time_spent,
-            "routed": route_coordinates,
+            "routed": routed,
         }
 
     except HTTPException:
