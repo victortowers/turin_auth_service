@@ -177,6 +177,7 @@ indptr = np.load(".osm_cache/indptr.npy") #4
 #edge_distance = np.load(".osm_cache/edge_distance.npy", mmap_mode="r")
 #edge_speed = np.load(".osm_cache/edge_speed.npy", mmap_mode="r")
 
+A = sp.csr_matrix((data, indices, indptr), shape=tupe(shape))
 benchmark_count = 1_000_000
 random_indices = np.random.randint(
     0,
@@ -197,7 +198,7 @@ print(
     flush=True,
 )
 print("nodes:", A.shape[0], "| directed edges:", A.nnz,"| avg degree: %.2f" % (A.nnz / A.shape[0]))
-
+A = []
 #start = 1871769061
 #start = 31935580 # (Aeroporto de Viracopos)
 #start = 1001568698 # (Residência Cidade Jardim)
