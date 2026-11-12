@@ -266,10 +266,7 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
                 "detail": "Out of time. The limit for processing is 4210ms.",
             }
 
-        route_coordinates = [
-            coordinates[find_position(node_id)].tolist()
-            for node_id in routed
-        ]
+        route_coordinates = coordinates[routed].tolist()
 
         time_spent = monotonic() - time1
         return {
