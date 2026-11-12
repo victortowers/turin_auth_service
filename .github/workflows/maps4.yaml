@@ -4,9 +4,6 @@ on:
   schedule:
     - cron: "30 7 * * *"
   workflow_dispatch:
-  push:
-    branches:
-      - master
 
 permissions:
   contents: read
