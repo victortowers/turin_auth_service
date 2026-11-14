@@ -219,6 +219,8 @@ jobs:
             --bbox "$BBOX" \
             --threads 0 \
             --verbose
+            --download
+
           test -s data/sp.pmtiles
           # An existing but truncated archive is worth catching before the
           # inspect/verify steps, where the error is harder to read.
