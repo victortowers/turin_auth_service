@@ -245,8 +245,8 @@ jobs:
             tilemaker \
               --config config.json \
               --process process.lua \
-              --input sp.osm.pbf \
-              --output sp.pmtiles \
+              --input data/sp.osm.pbf \
+              --output data/sp.pmtiles \
               --bbox "$BBOX" \
               --threads 0 \
               --verbose
