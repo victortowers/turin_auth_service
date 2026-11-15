@@ -28,22 +28,6 @@ jobs:
         working-directory: ./turin_proxy
         run: docker build -t turin-container:latest .
 
-      - name: Start services
-        working-directory: ./turin_proxy
-        run: docker compose up -d
-
-      - name: Debug container
-        run: |
-          docker compose ps
-          docker compose logs --no-color traffic-test
-          sleep 5
-          docker compose ps
-          docker compose logs --no-color traffic-test
-
-      - name: Cleanup
-        if: always()
-        run: docker compose down
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
