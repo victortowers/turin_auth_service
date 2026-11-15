@@ -129,3 +129,7 @@ def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin
         "expiry": claims.get("exp", "-1"),
         "picture": claims.get("picture")
     }
+
+@app.get("/tile")
+def get_tile():
+    return {"message": "This endpoint is not yet operational."}
