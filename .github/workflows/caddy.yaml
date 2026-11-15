@@ -38,7 +38,7 @@ jobs:
       - name: Build & Push Image
         uses: docker/build-push-action@v6
         with:
-          context: ./turin_graph
+          context: ./turin_proxy
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
