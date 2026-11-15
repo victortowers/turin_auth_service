@@ -48,5 +48,5 @@ jobs:
           context: ./turin_proxy
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/caddyv1:latest
+            ${{ env.REGISTRY }}/caddyv1:${{ github.sha }}
