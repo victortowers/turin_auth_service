@@ -41,5 +41,5 @@ jobs:
           context: ./turin_proxy
           push: true
           tags: |
-            ${{ env.REGISTRY }}/caddy:latest
-            ${{ env.REGISTRY }}/caddy:${{ github.sha }}
+            ghcr.io/caddy:latest
+            ghcr.io/caddy:${{ github.sha }}
