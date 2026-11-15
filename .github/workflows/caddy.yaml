@@ -1,0 +1,61 @@
+name: Update PMTiles
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Build and upload
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          aws s3 copy "s3://turin-data/Caddyfile" "Caddyfile"  \
+            --endpoint-url "$ENDPOINT" \
+
+      - name: Docker Run
+        working-directory: ./turin_proxy
+        run: docker build -t turin-container:latest .
+
+      - name: Start services
+        working-directory: ./turin_proxy
+        run: docker compose up -d
+
+      - name: Debug container
+        run: |
+          docker compose ps
+          docker compose logs --no-color traffic-test
+          sleep 5
+          docker compose ps
+          docker compose logs --no-color traffic-test
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./turin_graph
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
