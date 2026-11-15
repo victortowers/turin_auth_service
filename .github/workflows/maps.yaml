@@ -3,10 +3,6 @@ name: Update PMTiles
 on:
   workflow_dispatch:
 
-  push:
-    branches:
-      - master
-
 jobs:
   build:
     runs-on: ubuntu-latest
