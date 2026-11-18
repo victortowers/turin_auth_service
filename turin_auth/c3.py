@@ -62,7 +62,7 @@ def session_login(payload: LoginRequest, response: Response):
     except exceptions.FirebaseError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unable to create session cookie")
 
-@app.post("/sessionLogout")
+@app.post("/auth/sessionLogout")
 def session_logout(response: Response, turin_session: str | None = Cookie(default=None)):
     response.delete_cookie(key="__Secure-turin_session", domain=".turinflow.com.br", httponly=True, secure=True, samesite="lax")
 

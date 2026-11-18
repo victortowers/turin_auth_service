@@ -314,7 +314,7 @@ def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin
         "picture": claims.get("picture")
     }
 
-@app.post("/sessionLogin",
+@app.post("/auth/sessionLogin",
     responses={400: {"description": "Malformed request body"}, 401: {"description": "A new session token is required."}},
 )
 
@@ -346,7 +346,7 @@ def session_login(payload: LoginRequest, response: Response):
             detail="Unable to create session cookie",
         ) from None
 
-@app.post("/sessionLogout")
+@app.post("/auth/sessionLogout")
 def session_logout(response: Response,turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session")):
     response.delete_cookie(key="__Secure-turin_session",domain=".turinflow.com.br",path="/",httponly=True,secure=True,samesite="lax")
 
