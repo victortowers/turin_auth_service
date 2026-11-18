@@ -288,7 +288,7 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
 async def homepage():
     return {"status": 200, "message": "You can try your cookies (and its validity) at f.turinflow.com.br/me"}
 
-@app.get("/me")
+@app.get("/session/me")
 def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
     if not turin_session:
         raise HTTPException(status_code=401,detail="Not authenticated")
