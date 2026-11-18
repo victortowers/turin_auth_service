@@ -40,7 +40,7 @@ class LoginRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_token: str = Field(..., alias="idToken")
 
-@app.post("/sessionLogin")
+@app.post("/auth/sessionLogin")
 def session_login(payload: LoginRequest, response: Response):
     id_token = payload.id_token
 
@@ -100,11 +100,11 @@ async def require_auth(
             detail="Invalid session",
         ) from None
 
-@app.get("/")
+@app.get("/auth/")
 async def homepage():
     return {"status": 200, "message": "You can try your cookies (and its validity) at f.turinflow.com.br/me"}
 
-@app.get("/me")
+@app.get("/auth/me")
 def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session"), user: dict = Depends(require_auth)):
     if not turin_session:
         raise HTTPException(status_code=401,detail="Not authenticated")
@@ -130,6 +130,6 @@ def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin
         "picture": claims.get("picture")
     }
 
-@app.get("/tile")
+@app.get("/maps/tile")
 def get_tile():
     return {"message": "This endpoint is not yet operational."}
