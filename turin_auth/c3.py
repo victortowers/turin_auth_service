@@ -63,7 +63,7 @@ def session_login(payload: LoginRequest, response: Response):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unable to create session cookie")
 
 @app.post("/auth/sessionLogout")
-def session_logout(response: Response, turin_session: str | None = Cookie(default=None)):
+def session_logout(response: Response, turin_session: str | None = Cookie(default=None,alias="__Secure-turin_session")):
     response.delete_cookie(key="__Secure-turin_session", domain=".turinflow.com.br", httponly=True, secure=True, samesite="lax")
 
     if turin_session:
@@ -129,6 +129,10 @@ def get_me(turin_session: str | None = Cookie(default=None,alias="__Secure-turin
         "expiry": claims.get("exp", "-1"),
         "picture": claims.get("picture")
     }
+
+@app.get("/health")
+def return_health():
+    return {"message": "200 OK"}
 
 @app.get("/maps/tile")
 def get_tile():

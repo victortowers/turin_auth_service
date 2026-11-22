@@ -362,6 +362,10 @@ def session_logout(response: Response,turin_session: str | None = Cookie(default
 
         return {"status": "200 OK", "message": "Logged out"}
 
+@app.get("/health")
+def return_health():
+    return {"message": "200 OK"}
+
 try:
     a4 = time.monotonic()
     total_distance, routed = a_star(start, end)
