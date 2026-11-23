@@ -5,3 +5,4 @@ turin_graph/.osm_cache_backup/
 turin_graph/__pycache__/
 turin_graph/routing-demo.html
 turin_proxy/Caddyfile
+/.intent8_feedback.sqlite3*
