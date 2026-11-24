@@ -89,7 +89,7 @@ jobs:
 
           echo "::add-mask::$SESSION_COOKIE"
           echo "SESSION_COOKIE=$SESSION_COOKIE" >> "$GITHUB_ENV"
-          echo "SESSION_COOKIE=$SESSION_COOKIE" > .env
+          echo "SESSION_COOKIE=$SESSION_COOKIE" >> .env
 
           echo "Firebase session exchange succeeded."
           ls -l .
@@ -102,4 +102,4 @@ jobs:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
-        run: strix -n -t ./ --scan-mode quick --max-budget 0.05
+        run: strix -n -t ./ --scan-mode quick --max-budget 0.0124
