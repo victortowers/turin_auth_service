@@ -35,8 +35,8 @@ jobs:
 
       - name: Run Security Scan
         env:
-          STRIX_LLM: ${{ secrets.STRIX_LLM_2 }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY_2 }}
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
         working-directory: ./
         run: strix -n -t ./ --scan-mode quick --max-budget 0.05
 
