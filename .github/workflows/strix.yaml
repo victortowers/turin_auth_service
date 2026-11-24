@@ -41,61 +41,84 @@ jobs:
       - name: Authenticate Firebase CI user
         shell: bash
         env:
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
           FIREBASE_TEST_EMAIL: demodemo@example.com
           FIREBASE_TEST_PASSWORD: demodemo
-        run: |
-          set -euox pipefail
+          SESSION_COOKIE_NAME: __Secure-turin_session
+          SESSION_LOGIN_URL: http://172.17.0.1:8080/auth/sessionLogin
 
+        run: |
+          set +x
+          set -euo pipefail
+          umask 077
+
+          : "${FIREBASE_WEB_API_KEY:?Missing Firebase Web API key}"
+          : "${FIREBASE_TEST_EMAIL:?Missing test email}"
+          : "${FIREBASE_TEST_PASSWORD:?Missing test password}"
+          : "${SESSION_COOKIE_NAME:?Missing exact session cookie name}"
+
+          # 1. Sign in as an ordinary Firebase user.
           LOGIN_RESPONSE=$(curl --fail-with-body -sS \
+            --connect-timeout 10 --max-time 60 \
             -X POST \
-             "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}" \
+            "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}" \
             -H "Content-Type: application/json" \
             -d "$(jq -n \
               --arg email "$FIREBASE_TEST_EMAIL" \
               --arg password "$FIREBASE_TEST_PASSWORD" \
               '{email:$email,password:$password,returnSecureToken:true}')")
 
-          ID_TOKEN=$(jq -er '.idToken' <<< "$LOGIN_RESPONSE")
+          ID_TOKEN=$(jq -er \
+            '.idToken | select(type == "string" and length > 0)' \
+            <<< "$LOGIN_RESPONSE")
+
           echo "::add-mask::$ID_TOKEN"
 
-          HEADERS=$(mktemp)
-          BODY=$(mktemp)
-          trap 'rm -f "$HEADERS" "$BODY"' EXIT
+          # 2. Exchange the ID token through your backend.
+          HEADERS=$(mktemp "$RUNNER_TEMP/firebase-session-headers.XXXXXX")
+          trap 'rm -f "$HEADERS"' EXIT
 
           HTTP_STATUS=$(curl -sS \
+            --connect-timeout 10 --max-time 60 \
             -D "$HEADERS" \
-            -o "$BODY" \
+            -o /dev/null \
             -w '%{http_code}' \
-            -X POST \
-            http://localhost:8080/auth/sessionLogin \
+            -X POST "$SESSION_LOGIN_URL" \
             -H "Content-Type: application/json" \
-            -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')")
+            -d "$(jq -n \
+              --arg idToken "$ID_TOKEN" \
+              '{idToken:$idToken}')")
 
-          echo "Session login HTTP status: $HTTP_STATUS"
-          jq . "$BODY" 2>/dev/null || cat "$BODY"
-
-          if [[ "$HTTP_STATUS" != "200" ]]; then
-            docker logs turin_test --tail 100
+          if [[ "$HTTP_STATUS" != 2?? ]]; then
+            echo "::error::Session exchange failed (HTTP $HTTP_STATUS). Check backend logs."
             exit 1
           fi
 
-          # Extract the cookie without relying on head.
-          SESSION_COOKIE=$(sed -nE \
-            's/^[Ss]et-[Cc]ookie:[[:space:]]*__Secure-turin_session=([^;]*).*/\1/ip' \
-            "$HEADERS" | tr -d '\r' | sed -n '1p')
+          # 3. Extract the cookie with the exact configured name.
+          SESSION_COOKIE=$(awk -v name="$SESSION_COOKIE_NAME" '
+            tolower($1) == "set-cookie:" {
+              sub(/^[^:]+:[[:space:]]*/, "")
+              sub(/\r$/, "")
+              split($0, parts, ";")
+              prefix = name "="
+              if (index(parts[1], prefix) == 1) {
+                print substr(parts[1], length(prefix) + 1)
+                exit
+              }
+            }
+          ' "$HEADERS")
 
           if [[ -z "$SESSION_COOKIE" ]]; then
-            echo "::error::Session cookie missing from response."
-            cat "$BODY"
+            echo "::error::Expected session cookie missing. Check SESSION_COOKIE_NAME."
             exit 1
           fi
 
+          # 4. Pass the cookie to subsequent steps in this job.
           echo "::add-mask::$SESSION_COOKIE"
-          echo "SESSION_COOKIE=$SESSION_COOKIE" >> "$GITHUB_ENV"
-          echo "SESSION_COOKIE=$SESSION_COOKIE" >> .env
+          printf 'SESSION_COOKIE=%s\n' "$SESSION_COOKIE" >> "$GITHUB_ENV"
+          printf 'SESSION_COOKIE_NAME=%s\n' "$SESSION_COOKIE_NAME" >> "$GITHUB_ENV"
 
           echo "Firebase session exchange succeeded."
-          ls -la .
 
       - name: Install Strix
         run: curl -sSL https://raw.githubusercontent.com/usestrix/strix/refs/heads/main/scripts/install.sh | bash
@@ -113,10 +136,3 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
         run: strix -n -t ./turin_graph -t http://172.17.0.1:8080 --scan-mode quick --max-budget 0.048 --instruction-file ./strix.md --scope-mode diff
-
-
-      - name: Upload SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: strix_runs
