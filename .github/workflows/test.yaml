@@ -38,7 +38,6 @@ jobs:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
-        working-directory: ./
         run: strix -n -t ./ --scan-mode quick --max-budget 0.05
 
       - name: Install UV
