@@ -28,7 +28,7 @@ jobs:
 
       - name: Docker Pull
         working-directory: ./turin_graph
-        run: docker pull ghcr.io/victortowers/turin_auth_service:31b052a84980aca54d0e221250f0f76539830f46 && docker compose up -d
+        run: docker pull ghcr.io/victortowers/turin_auth_service:latest && docker compose up -d
 
       - name: Wait for API
         run: |
