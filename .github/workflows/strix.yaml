@@ -102,4 +102,5 @@ jobs:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
-        run: strix -n -t ./ --scan-mode quick --max-budget 0.0124
+          SESSION_COOKIE: ${{ env.SESSION_COOKIE }}
+        run: strix -n -t ./turin_auth --scan-mode quick --max-budget 0.0124 --instructions-file
