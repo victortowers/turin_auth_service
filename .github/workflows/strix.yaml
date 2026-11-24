@@ -103,7 +103,7 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
           SESSION_COOKIE: ${{ env.SESSION_COOKIE }}
-        run: strix -n -t ./turin_auth -t http://localhost:8080 --scan-mode quick --max-budget 0.03 --instructions-file ./strix.md --scope-mode diff
+        run: strix -n -t ./turin_auth -t http://localhost:8080 --scan-mode quick --max-budget 0.03 --instruction-file ./strix.md --scope-mode diff
 
       - name: Upload SARIF
         if: always()
