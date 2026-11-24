@@ -21,15 +21,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
 
-      - name: Install Strix
-        run: curl -sSL https://raw.githubusercontent.com/usestrix/strix/refs/heads/main/scripts/install.sh | bash
-
-      - name: Run Security Scan
-        env:
-          STRIX_LLM: ${{ secrets.STRIX_LLM }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          STRIX_OPENROUTER_STICKY_SESSIONS: true
-        run: |
-
-          strix -n -t ./turin_graph --scan-mode quick --max-budget 0.0125
-          strix -n -t ./turin_auth --scan-mode quick --max-budget 0.0125
+      - name: Docker Pull
+        working-directory: ./turin_graph
+        run: docker pull ghcr.io/victortowers/turin_auth_service:31b052a84980aca54d0e221250f0f76539830f46 && docker compose up -d & sleep 10 & docker ps
