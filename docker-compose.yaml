@@ -1,0 +1,19 @@
+services:
+  traffic-test:
+    image: ghcr.io/victortowers/turin_auth_service:latest
+    container_name: turin_test
+    restart: unless-stopped
+    environment:
+      FIREBASE_WEB_API_KEY: ${FIREBASE_WEB_API_KEY:?FIREBASE_WEB_API_KEY is required}
+      SERVICE_CREDENTIALS: ${SERVICE_CREDENTIALS:?SERVICE_CREDENTIALS is required}
+      GOOGLE_CLOUD_PROJECT: ${GOOGLE_CLOUD_PROJECT:?GOOGLE_CLOUD_PROJECT is required}
+
+    ports:
+      - "8080:8080"
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/openapi.json')"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 0s
