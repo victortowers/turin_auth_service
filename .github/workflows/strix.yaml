@@ -105,8 +105,15 @@ jobs:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
-          SESSION_COOKIE: ${{ env.SESSION_COOKIE }}
-        run: strix -n -t ./turin_auth -t http://172.17.0.1:8080 --scan-mode quick --max-budget 0.03 --instruction-file ./strix.md --scope-mode diff
+        run: strix -n -t ./turin_auth --scan-mode quick --max-budget 0.02 --instruction-file ./strix.md --scope-mode diff
+
+      - name: Run Security Scan
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          STRIX_OPENROUTER_STICKY_SESSIONS: true
+        run: strix -n -t ./turin_graph -t http://172.17.0.1:8080 --scan-mode quick --max-budget 0.048 --instruction-file ./strix.md --scope-mode diff
+
 
       - name: Upload SARIF
         if: always()
