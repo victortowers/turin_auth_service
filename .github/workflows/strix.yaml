@@ -23,4 +23,68 @@ jobs:
 
       - name: Docker Pull
         working-directory: ./turin_graph
-        run: docker pull ghcr.io/victortowers/turin_auth_service:31b052a84980aca54d0e221250f0f76539830f46 && docker compose up -d & sleep 10 & docker ps
+        run: docker pull ghcr.io/victortowers/turin_auth_service:31b052a84980aca54d0e221250f0f76539830f46 && docker compose up -d
+
+      - name: Wait for API
+        run: |
+          timeout 10 bash -c \
+            'until curl -fsS http://localhost:8080/openapi.json > /dev/null; do sleep 1; done'
+
+      - name: Authenticate Firebase CI user
+        shell: bash
+        env:
+          FIREBASE_WEB_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+          SERVICE_CREDENTIALS: ${{ secrets.SERVICE_CREDENTIALS }}
+          FIREBASE_TEST_EMAIL: demodemo@example.com
+          FIREBASE_TEST_PASSWORD: demodemo
+        run: |
+          set -euox pipefail
+
+          LOGIN_RESPONSE=$(curl --fail-with-body -sS \
+            -X POST \
+             "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg email "$FIREBASE_TEST_EMAIL" \
+              --arg password "$FIREBASE_TEST_PASSWORD" \
+              '{email:$email,password:$password,returnSecureToken:true}')")
+
+          ID_TOKEN=$(jq -er '.idToken' <<< "$LOGIN_RESPONSE")
+          echo "::add-mask::$ID_TOKEN"
+
+          HEADERS=$(mktemp)
+          BODY=$(mktemp)
+          trap 'rm -f "$HEADERS" "$BODY"' EXIT
+
+          HTTP_STATUS=$(curl -sS \
+            -D "$HEADERS" \
+            -o "$BODY" \
+            -w '%{http_code}' \
+            -X POST \
+            http://localhost:8080/auth/sessionLogin \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')")
+
+          echo "Session login HTTP status: $HTTP_STATUS"
+          jq . "$BODY" 2>/dev/null || cat "$BODY"
+
+          if [[ "$HTTP_STATUS" != "200" ]]; then
+            docker logs turin_test --tail 100
+            exit 1
+          fi
+
+          # Extract the cookie without relying on head.
+          SESSION_COOKIE=$(sed -nE \
+            's/^[Ss]et-[Cc]ookie:[[:space:]]*__Secure-turin_session=([^;]*).*/\1/ip' \
+            "$HEADERS" | tr -d '\r' | sed -n '1p')
+
+          if [[ -z "$SESSION_COOKIE" ]]; then
+            echo "::error::Session cookie missing from response."
+            cat "$BODY"
+            exit 1
+          fi
+
+          echo "::add-mask::$SESSION_COOKIE"
+          echo "SESSION_COOKIE=$SESSION_COOKIE" >> "$GITHUB_ENV"
+
+          echo "Firebase session exchange succeeded."
