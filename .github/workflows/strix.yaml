@@ -21,6 +21,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: read
 
     steps:
       - name: Checkout Repository
@@ -94,7 +95,7 @@ jobs:
           echo "SESSION_COOKIE=$SESSION_COOKIE" >> .env
 
           echo "Firebase session exchange succeeded."
-          ls -l .
+          ls -la .
 
       - name: Install Strix
         run: curl -sSL https://raw.githubusercontent.com/usestrix/strix/refs/heads/main/scripts/install.sh | bash
@@ -105,7 +106,7 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           STRIX_OPENROUTER_STICKY_SESSIONS: true
           SESSION_COOKIE: ${{ env.SESSION_COOKIE }}
-        run: strix -n -t ./turin_auth -t http://localhost:8080 --scan-mode quick --max-budget 0.03 --instruction-file ./strix.md --scope-mode diff
+        run: strix -n -t ./turin_auth -t http://172.17.0.1:8080 --scan-mode quick --max-budget 0.03 --instruction-file ./strix.md --scope-mode diff
 
       - name: Upload SARIF
         if: always()
