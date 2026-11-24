@@ -89,5 +89,17 @@ jobs:
 
           echo "::add-mask::$SESSION_COOKIE"
           echo "SESSION_COOKIE=$SESSION_COOKIE" >> "$GITHUB_ENV"
+          echo "SESSION_COOKIE=$SESSION_COOKIE" > .env
 
           echo "Firebase session exchange succeeded."
+          ls -l .
+
+      - name: Install Strix
+        run: curl -sSL https://raw.githubusercontent.com/usestrix/strix/refs/heads/main/scripts/install.sh | bash
+
+      - name: Run Security Scan
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          STRIX_OPENROUTER_STICKY_SESSIONS: true
+        run: strix -n -t ./ --scan-mode quick --max-budget 0.05

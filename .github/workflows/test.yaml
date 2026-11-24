@@ -109,7 +109,7 @@ jobs:
             -o "$BODY" \
             -w '%{http_code}' \
             -X POST \
-            http://localhost:8080/sessionLogin \
+            http://localhost:8080/auth/sessionLogin \
             -H "Content-Type: application/json" \
             -d "$(jq -n --arg idToken "$ID_TOKEN" '{idToken:$idToken}')")
 
