@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Install Strix
         run: curl -sSL https://raw.githubusercontent.com/usestrix/strix/refs/heads/main/scripts/install.sh | bash
