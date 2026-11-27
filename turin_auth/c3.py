@@ -36,6 +36,28 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
+ALLOWED_ORIGINS = {
+    "https://turinflow.com.br",
+    "https://www.turinflow.com.br",
+}
+
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+@app.middleware("http")
+async def csrf_protection(request: Request, call_next):
+
+    if request.method not in SAFE_METHODS:
+
+        origin = request.headers.get("origin")
+
+        if origin not in ALLOWED_ORIGINS:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "403 Forbidden"}
+            )
+
+    return await call_next(request)
+
 class LoginRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id_token: str = Field(..., alias="idToken")

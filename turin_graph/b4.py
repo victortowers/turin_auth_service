@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException, Response, Cookie, status, Depends
+from fastapi import FastAPI, HTTPException, Response, Cookie, status, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from firebase_admin import auth, exceptions, credentials
 from pydantic import BaseModel, Field, ConfigDict
 from time import monotonic
@@ -44,6 +44,28 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
 )
+
+ALLOWED_ORIGINS = {
+    "https://turinflow.com.br",
+    "https://www.turinflow.com.br",
+}
+
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+@app.middleware("http")
+async def csrf_protection(request: Request, call_next):
+
+    if request.method not in SAFE_METHODS:
+
+        origin = request.headers.get("origin")
+
+        if origin not in ALLOWED_ORIGINS:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "403 Forbidden"}
+            )
+
+    return await call_next(request)
 
 class RoutingRequest(BaseModel):
     node_start: int
@@ -252,6 +274,13 @@ def location_search(payload: RoutingRequest, response: Response, user: dict = De
     try:
         node_start = payload.node_start
         node_end = payload.node_end
+
+        if node_start > 10 ** 12 or node_end > 10 ** 12:
+            raise HTTPException(status_code=400,detail="Bad request (Malformed request body)",)
+
+        if node_start < 1 or node_end < 1:
+            raise HTTPException(status_code=400,detail="Bad request (Malformed request body)",)
+
         time1 = monotonic()
 
         total_eta, routed = a_star(node_start, node_end)
